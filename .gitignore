@@ -1,0 +1,8 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/Human Resource Management System/.vs
+/.vs
+/Human Resource Management System/bin/Debug/net10.0
+/Human Resource Management System/obj

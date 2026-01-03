@@ -1,0 +1,170 @@
+@model List<EmployeeViewModel>
+@{
+    ViewData["Title"] = "Employee Management";
+}
+
+<style>
+    .employee-card {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+    }
+    .employee-card:hover {
+        transform: translateY(-2px);
+    }
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: bold;
+    }
+    .status-active {
+        background: #d4edda;
+        color: #155724;
+    }
+    .status-leave {
+        background: #fff3cd;
+        color: #856404;
+    }
+    .search-box {
+        border-radius: 25px;
+        border: 2px solid #eee;
+        padding: 10px 20px;
+    }
+    .search-box:focus {
+        border-color: #667eea;
+        box-shadow: none;
+    }
+</style>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <h2 class="mb-0">Employee Management</h2>
+        <p class="text-muted">Manage your workforce efficiently</p>
+    </div>
+    <div class="col-md-6 text-end">
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Add New Employee
+        </a>
+    </div>
+</div>
+
+<!-- Search and Filter -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <input type="text" class="form-control search-box" id="searchEmployee" placeholder="Search employees...">
+    </div>
+    <div class="col-md-3">
+        <select class="form-select" id="departmentFilter">
+            <option value="">All Departments</option>
+            <option value="IT">IT</option>
+            <option value="HR">HR</option>
+            <option value="Finance">Finance</option>
+            <option value="Sales">Sales</option>
+        </select>
+    </div>
+    <div class="col-md-3">
+        <select class="form-select" id="statusFilter">
+            <option value="">All Status</option>
+            <option value="Active">Active</option>
+            <option value="On Leave">On Leave</option>
+        </select>
+    </div>
+</div>
+
+<!-- Employee Grid -->
+<div class="row" id="employeeGrid">
+    @foreach (var employee in Model)
+    {
+        <div class="col-md-4 mb-4 employee-item" data-department="@employee.Department" data-status="@employee.Status" data-name="@employee.Name.ToLower()">
+            <div class="employee-card p-4">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                        <strong>@employee.Name.Split(' ').Select(n => n[0]).Take(2).Aggregate("", (acc, c) => acc + c)</strong>
+                    </div>
+                    <div class="ms-3 flex-grow-1">
+                        <h6 class="mb-0">@employee.Name</h6>
+                        <small class="text-muted">@employee.Id</small>
+                    </div>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" asp-action="Edit" asp-route-id="@employee.Id"><i class="fas fa-edit"></i> Edit</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-eye"></i> View Details</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="#"><i class="fas fa-trash"></i> Delete</a></li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="mb-2">
+                    <strong>Position:</strong> @employee.Position
+                </div>
+                <div class="mb-2">
+                    <strong>Department:</strong> @employee.Department
+                </div>
+                <div class="mb-2">
+                    <strong>Email:</strong> @employee.Email
+                </div>
+                <div class="mb-3">
+                    <strong>Join Date:</strong> @employee.JoinDate.ToString("MMM dd, yyyy")
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="status-badge @(employee.Status == "Active" ? "status-active" : "status-leave")">
+                        @employee.Status
+                    </span>
+                    <span class="fw-bold">?@employee.Salary.ToString("N0")</span>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Empty State -->
+<div class="text-center mt-5" id="emptyState" style="display: none;">
+    <i class="fas fa-users fa-3x text-muted mb-3"></i>
+    <h5>No employees found</h5>
+    <p class="text-muted">Try adjusting your search or filter criteria</p>
+</div>
+
+@section Scripts {
+    <script>
+        // Search and filter functionality
+        document.getElementById('searchEmployee').addEventListener('input', filterEmployees);
+        document.getElementById('departmentFilter').addEventListener('change', filterEmployees);
+        document.getElementById('statusFilter').addEventListener('change', filterEmployees);
+
+        function filterEmployees() {
+            const searchTerm = document.getElementById('searchEmployee').value.toLowerCase();
+            const departmentFilter = document.getElementById('departmentFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+            
+            const employees = document.querySelectorAll('.employee-item');
+            let visibleCount = 0;
+
+            employees.forEach(employee => {
+                const name = employee.getAttribute('data-name');
+                const department = employee.getAttribute('data-department');
+                const status = employee.getAttribute('data-status');
+
+                const matchesSearch = name.includes(searchTerm);
+                const matchesDepartment = !departmentFilter || department === departmentFilter;
+                const matchesStatus = !statusFilter || status === statusFilter;
+
+                if (matchesSearch && matchesDepartment && matchesStatus) {
+                    employee.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    employee.style.display = 'none';
+                }
+            });
+
+            // Show/hide empty state
+            document.getElementById('emptyState').style.display = visibleCount === 0 ? 'block' : 'none';
+        }
+    </script>
+}
