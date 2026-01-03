@@ -1,107 +1,194 @@
-@model EmployeeViewModel
+@model Human_Resource_Management_System.Models.EmployeeViewModel
 @{
-    ViewData["Title"] = "Edit Employee";
+    ViewData["Title"] = $"Edit Employee - {Model.EmployeeCode}";
 }
 
-<div class="row">
-    <div class="col-md-8 mx-auto">
-        <div class="card shadow">
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0"><i class="fas fa-user-edit"></i> Edit Employee - @Model.Name</h5>
-            </div>
-            <div class="card-body">
-                <form asp-action="Edit" method="post">
-                    <input type="hidden" asp-for="Id" />
+<style>
+    .edit-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .edit-header {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        color: white;
+        border-radius: 15px 15px 0 0;
+        padding: 25px;
+    }
+    .form-section {
+        background: #f8fafc;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    .form-section h6 {
+        color: #6366f1;
+        font-weight: 600;
+        margin-bottom: 15px;
+        border-bottom: 2px solid #e2e8f0;
+        padding-bottom: 10px;
+    }
+</style>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="edit-card">
+                <div class="edit-header">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle bg-white text-primary d-flex align-items-center justify-content-center me-3" style="width: 60px; height: 60px; font-size: 1.5rem; font-weight: bold;">
+                            @(Model.FirstName?.FirstOrDefault())@(Model.LastName?.FirstOrDefault())
+                        </div>
+                        <div>
+                            <h4 class="mb-1"><i class="fas fa-user-edit me-2"></i>Edit Employee</h4>
+                            <p class="mb-0 opacity-75">@Model.EmployeeCode - @Model.FullName</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-body p-4">
+                    @if (TempData["Error"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-circle me-2"></i>@TempData["Error"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
                     
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label asp-for="Id" class="form-label">Employee ID</label>
-                                <input asp-for="Id" class="form-control" readonly />
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label asp-for="Name" class="form-label">Full Name</label>
-                                <input asp-for="Name" class="form-control" />
-                                <span asp-validation-for="Name" class="text-danger"></span>
-                            </div>
-                        </div>
-                    </div>
+                    <form asp-action="Edit" method="post">
+                        <input type="hidden" asp-for="EmployeeId" />
+                        <input type="hidden" asp-for="EmployeeCode" />
+                        
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
 
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label asp-for="Email" class="form-label">Email Address</label>
-                                <input asp-for="Email" class="form-control" type="email" />
-                                <span asp-validation-for="Email" class="text-danger"></span>
+                        <!-- Personal Information -->
+                        <div class="form-section">
+                            <h6><i class="fas fa-user me-2"></i>Personal Information</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label asp-for="FirstName" class="form-label">First Name <span class="text-danger">*</span></label>
+                                        <input asp-for="FirstName" class="form-control" placeholder="Enter first name" />
+                                        <span asp-validation-for="FirstName" class="text-danger"></span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label asp-for="LastName" class="form-label">Last Name <span class="text-danger">*</span></label>
+                                        <input asp-for="LastName" class="form-control" placeholder="Enter last name" />
+                                        <span asp-validation-for="LastName" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label asp-for="Email" class="form-label">Email Address <span class="text-danger">*</span></label>
+                                        <input asp-for="Email" class="form-control" type="email" placeholder="Enter email address" />
+                                        <span asp-validation-for="Email" class="text-danger"></span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label asp-for="Phone" class="form-label">Phone Number</label>
+                                        <input asp-for="Phone" class="form-control" placeholder="Enter phone number" />
+                                        <span asp-validation-for="Phone" class="text-danger"></span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label asp-for="Department" class="form-label">Department</label>
-                                <select asp-for="Department" class="form-select">
-                                    <option value="">Select Department</option>
-                                    <option value="IT">Information Technology</option>
-                                    <option value="HR">Human Resources</option>
-                                    <option value="Finance">Finance</option>
-                                    <option value="Sales">Sales</option>
-                                    <option value="Marketing">Marketing</option>
-                                    <option value="Operations">Operations</option>
-                                </select>
-                                <span asp-validation-for="Department" class="text-danger"></span>
-                            </div>
-                        </div>
-                    </div>
 
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label asp-for="Position" class="form-label">Position</label>
-                                <input asp-for="Position" class="form-control" />
-                                <span asp-validation-for="Position" class="text-danger"></span>
+                        <!-- Employment Information -->
+                        <div class="form-section">
+                            <h6><i class="fas fa-briefcase me-2"></i>Employment Information</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Employee Code</label>
+                                        <input value="@Model.EmployeeCode" class="form-control" readonly style="background-color: #e9ecef;" />
+                                        <small class="text-muted">Employee code cannot be changed</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label asp-for="Department" class="form-label">Department <span class="text-danger">*</span></label>
+                                        <select asp-for="Department" class="form-select">
+                                            <option value="">Select Department</option>
+                                            <option value="IT">Information Technology</option>
+                                            <option value="HR">Human Resources</option>
+                                            <option value="Finance">Finance</option>
+                                            <option value="Sales">Sales</option>
+                                            <option value="Marketing">Marketing</option>
+                                            <option value="Operations">Operations</option>
+                                            <option value="Engineering">Engineering</option>
+                                            <option value="Administration">Administration</option>
+                                        </select>
+                                        <span asp-validation-for="Department" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label asp-for="Position" class="form-label">Position <span class="text-danger">*</span></label>
+                                        <input asp-for="Position" class="form-control" placeholder="Enter position/job title" />
+                                        <span asp-validation-for="Position" class="text-danger"></span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label asp-for="HireDate" class="form-label">Hire Date <span class="text-danger">*</span></label>
+                                        <input asp-for="HireDate" class="form-control" type="date" />
+                                        <span asp-validation-for="HireDate" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label asp-for="Salary" class="form-label">Annual Salary (?) <span class="text-danger">*</span></label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">?</span>
+                                            <input asp-for="Salary" class="form-control" type="number" step="1000" min="0" placeholder="Enter annual salary" />
+                                        </div>
+                                        <span asp-validation-for="Salary" class="text-danger"></span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label asp-for="Status" class="form-label">Employment Status <span class="text-danger">*</span></label>
+                                        <select asp-for="Status" class="form-select">
+                                            <option value="Active">Active</option>
+                                            <option value="On Leave">On Leave</option>
+                                            <option value="Inactive">Inactive</option>
+                                        </select>
+                                        <span asp-validation-for="Status" class="text-danger"></span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label asp-for="JoinDate" class="form-label">Join Date</label>
-                                <input asp-for="JoinDate" class="form-control" type="date" />
-                                <span asp-validation-for="JoinDate" class="text-danger"></span>
-                            </div>
-                        </div>
-                    </div>
 
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label asp-for="Salary" class="form-label">Annual Salary (?)</label>
-                                <input asp-for="Salary" class="form-control" type="number" step="1000" />
-                                <span asp-validation-for="Salary" class="text-danger"></span>
+                        <!-- Action Buttons -->
+                        <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                            <a asp-action="Index" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Back to List
+                            </a>
+                            <div>
+                                <a asp-action="Details" asp-route-id="@Model.EmployeeId" class="btn btn-outline-info me-2">
+                                    <i class="fas fa-eye me-2"></i>View Details
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>Update Employee
+                                </button>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label asp-for="Status" class="form-label">Status</label>
-                                <select asp-for="Status" class="form-select">
-                                    <option value="Active">Active</option>
-                                    <option value="On Leave">On Leave</option>
-                                    <option value="Inactive">Inactive</option>
-                                </select>
-                                <span asp-validation-for="Status" class="text-danger"></span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="d-flex justify-content-between">
-                        <a asp-action="Index" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left"></i> Back to List
-                        </a>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save"></i> Update Employee
-                        </button>
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

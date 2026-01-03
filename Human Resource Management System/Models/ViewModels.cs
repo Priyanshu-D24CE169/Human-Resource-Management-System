@@ -172,18 +172,45 @@ namespace Human_Resource_Management_System.Models
         public int AttendanceId { get; set; }
         public int EmployeeId { get; set; }
         public string EmployeeName { get; set; } = string.Empty;
+        public string EmployeeCode { get; set; } = string.Empty;
+        public string Department { get; set; } = string.Empty;
         public DateTime Date { get; set; }
         public TimeSpan CheckIn { get; set; }
         public TimeSpan CheckOut { get; set; }
         public string Status { get; set; } = string.Empty;
         public decimal WorkingHours { get; set; }
+        public string? Notes { get; set; }
+    }
+
+    public class MarkAttendanceViewModel
+    {
+        [Required(ErrorMessage = "Employee is required")]
+        public int EmployeeId { get; set; }
+        
+        [Required(ErrorMessage = "Date is required")]
+        [DataType(DataType.Date)]
+        public DateTime Date { get; set; } = DateTime.Today;
+        
+        [DataType(DataType.Time)]
+        public TimeSpan? CheckIn { get; set; }
+        
+        [DataType(DataType.Time)]
+        public TimeSpan? CheckOut { get; set; }
+        
+        [Required(ErrorMessage = "Status is required")]
+        public string Status { get; set; } = "Present";
+        
+        public string? Notes { get; set; }
     }
 
     public class PayrollViewModel
     {
         public int PayrollId { get; set; }
         public int EmployeeId { get; set; }
+        public string EmployeeCode { get; set; } = string.Empty;
         public string EmployeeName { get; set; } = string.Empty;
+        public string Department { get; set; } = string.Empty;
+        public string Position { get; set; } = string.Empty;
         public DateTime PayPeriodStart { get; set; }
         public DateTime PayPeriodEnd { get; set; }
         public decimal BasicSalary { get; set; }
@@ -192,6 +219,10 @@ namespace Human_Resource_Management_System.Models
         public decimal NetSalary { get; set; }
         public DateTime PayDate { get; set; }
         public string Status { get; set; } = string.Empty;
+        
+        // Computed properties
+        public string PayPeriod => $"{PayPeriodStart:MMM yyyy}";
+        public decimal GrossSalary => BasicSalary + Allowances;
     }
 
     public class EmployeeDashboardViewModel
