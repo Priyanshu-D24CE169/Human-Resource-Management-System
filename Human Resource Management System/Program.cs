@@ -114,50 +114,102 @@ static string GetLocalIPAddress()
 
 static async Task<string> GetWorkingConnectionStringAsync(IConfiguration configuration)
 {
+    var databaseSettings = configuration.GetSection("DatabaseSettings");
+    var useIntranetServer = databaseSettings.GetValue<bool>("UseIntranetServer");
+    
+    // Priority order for connection strings
+    var connectionStringsToTest = new List<(string name, string connectionString)>();
+    
+    if (useIntranetServer)
+    {
+        // Add intranet server options first
+        var preferHostname = databaseSettings.GetValue<bool>("PreferHostnameOverIP");
+        var sqlServerIP = databaseSettings.GetValue<string>("SqlServerIP");
+        var sqlServerHostname = databaseSettings.GetValue<string>("SqlServerHostname");
+        var sqlUsername = databaseSettings.GetValue<string>("SqlUsername");
+        var sqlPassword = databaseSettings.GetValue<string>("SqlPassword");
+        
+        if (preferHostname && !string.IsNullOrEmpty(sqlServerHostname))
+        {
+            var hostnameConnectionString = configuration.GetConnectionString("IntranetSqlServerHostname");
+            if (!string.IsNullOrEmpty(hostnameConnectionString))
+            {
+                // Replace placeholders with actual values
+                hostnameConnectionString = hostnameConnectionString
+                    .Replace("YOUR_HOSTNAME", sqlServerHostname)
+                    .Replace("YOUR_SQL_USERNAME", sqlUsername)
+                    .Replace("YOUR_SQL_PASSWORD", sqlPassword);
+                connectionStringsToTest.Add(("Intranet SQL Server (Hostname)", hostnameConnectionString));
+            }
+        }
+        
+        if (!string.IsNullOrEmpty(sqlServerIP))
+        {
+            var ipConnectionString = configuration.GetConnectionString("IntranetSqlServerIP");
+            if (!string.IsNullOrEmpty(ipConnectionString))
+            {
+                // Replace placeholders with actual values
+                ipConnectionString = ipConnectionString
+                    .Replace("YOUR_IP_ADDRESS", sqlServerIP)
+                    .Replace("YOUR_SQL_USERNAME", sqlUsername)
+                    .Replace("YOUR_SQL_PASSWORD", sqlPassword);
+                connectionStringsToTest.Add(("Intranet SQL Server (IP)", ipConnectionString));
+            }
+        }
+        
+        if (!preferHostname && !string.IsNullOrEmpty(sqlServerHostname))
+        {
+            var hostnameConnectionString = configuration.GetConnectionString("IntranetSqlServerHostname");
+            if (!string.IsNullOrEmpty(hostnameConnectionString))
+            {
+                // Replace placeholders with actual values
+                hostnameConnectionString = hostnameConnectionString
+                    .Replace("YOUR_HOSTNAME", sqlServerHostname)
+                    .Replace("YOUR_SQL_USERNAME", sqlUsername)
+                    .Replace("YOUR_SQL_PASSWORD", sqlPassword);
+                connectionStringsToTest.Add(("Intranet SQL Server (Hostname)", hostnameConnectionString));
+            }
+        }
+    }
+    
+    // Add local options as fallback
     var defaultConnectionString = configuration.GetConnectionString("DefaultConnection");
     var localDbConnectionString = configuration.GetConnectionString("LocalDbConnection");
     
-    // Test SQL Server Express connection first
-    try
+    if (!string.IsNullOrEmpty(defaultConnectionString))
+        connectionStringsToTest.Add(("Local SQL Server Express", defaultConnectionString));
+    
+    if (!string.IsNullOrEmpty(localDbConnectionString))
+        connectionStringsToTest.Add(("Local DB", localDbConnectionString));
+    
+    // Test each connection string in order
+    foreach (var (name, connectionString) in connectionStringsToTest)
     {
-        var optionsBuilder = new DbContextOptionsBuilder<HrmsDbContext>();
-        optionsBuilder.UseSqlServer(defaultConnectionString);
-        
-        using var testContext = new HrmsDbContext(optionsBuilder.Options);
-        
-        // Try to connect with a short timeout
-        using var connection = testContext.Database.GetDbConnection();
-        await connection.OpenAsync();
-        await connection.CloseAsync();
-        
-        Console.WriteLine("Using SQL Server Express connection.");
-        return defaultConnectionString;
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"SQL Server Express not available ({ex.GetType().Name}). Falling back to LocalDB.");
-        
-        // Test LocalDB connection
         try
         {
             var optionsBuilder = new DbContextOptionsBuilder<HrmsDbContext>();
-            optionsBuilder.UseSqlServer(localDbConnectionString);
+            optionsBuilder.UseSqlServer(connectionString);
             
             using var testContext = new HrmsDbContext(optionsBuilder.Options);
+            
+            // Try to connect with a reasonable timeout
             using var connection = testContext.Database.GetDbConnection();
-            await connection.OpenAsync();
+            using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            await connection.OpenAsync(cancellationTokenSource.Token);
             await connection.CloseAsync();
             
-            Console.WriteLine("LocalDB connection successful.");
-            return localDbConnectionString;
+            Console.WriteLine($"? Successfully connected using: {name}");
+            return connectionString;
         }
-        catch (Exception localEx)
+        catch (Exception ex)
         {
-            Console.WriteLine($"LocalDB also failed: {localEx.Message}");
-            // Fall back to original connection string and let normal error handling take over
-            return defaultConnectionString;
+            Console.WriteLine($"? Failed to connect using {name}: {ex.GetType().Name} - {ex.Message}");
         }
     }
+    
+    // If all connections fail, return the first available connection string and let normal error handling take over
+    Console.WriteLine("? All connection attempts failed. Using first available connection string.");
+    return connectionStringsToTest.FirstOrDefault().connectionString ?? defaultConnectionString ?? localDbConnectionString ?? "";
 }
 
 static async Task MigrateDatabaseAsync(WebApplication app)
