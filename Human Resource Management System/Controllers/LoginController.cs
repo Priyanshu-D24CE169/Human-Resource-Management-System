@@ -50,7 +50,7 @@ namespace Human_Resource_Management_System.Controllers
                     // Redirect based on role
                     if (user.Role == "Admin")
                     {
-                        return RedirectToAction("Index", "Home");
+                        return RedirectToAction("Index", "Dashboard");
                     }
                     else if (user.Role == "Employee")
                     {
@@ -59,7 +59,7 @@ namespace Human_Resource_Management_System.Controllers
                     else
                     {
                         // Default redirect for other roles
-                        return RedirectToAction("Index", "Home");
+                        return RedirectToAction("Index", "Dashboard");
                     }
                 }
                 else

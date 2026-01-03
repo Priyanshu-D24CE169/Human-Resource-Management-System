@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
 using Human_Resource_Management_System.Models;
 using Human_Resource_Management_System.Services;
+using Human_Resource_Management_System.Attributes;
 
 namespace Human_Resource_Management_System.Controllers
 {
+    [EmployeeAuthorize]
     public class EmployeeDashboardController : BaseController
     {
         private readonly IEmployeeService _employeeService;

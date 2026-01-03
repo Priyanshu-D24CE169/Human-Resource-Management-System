@@ -4,11 +4,23 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Human_Resource_Management_System.Controllers
 {
-    public class HomeController : Controller
+    public class HomeController : BaseController
     {
         public IActionResult Index()
         {
-            return View();
+            // Redirect to appropriate dashboard based on role
+            var userRole = HttpContext.Session.GetString("UserRole");
+            
+            if (userRole == "Admin")
+            {
+                return RedirectToAction("Index", "Dashboard");
+            }
+            else if (userRole == "Employee")
+            {
+                return RedirectToAction("Index", "EmployeeDashboard");
+            }
+            
+            return RedirectToAction("Index", "Login");
         }
 
         public IActionResult Privacy()

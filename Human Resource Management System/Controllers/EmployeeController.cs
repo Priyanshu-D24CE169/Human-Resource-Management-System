@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
 using Human_Resource_Management_System.Models;
 using Human_Resource_Management_System.Services;
+using Human_Resource_Management_System.Attributes;
 using System.ComponentModel.DataAnnotations;
 
 namespace Human_Resource_Management_System.Controllers
 {
+    [AdminAuthorize]
     public class EmployeeController : BaseController
     {
         private readonly IEmployeeService _employeeService;
@@ -263,7 +265,8 @@ namespace Human_Resource_Management_System.Controllers
             }
         }
 
-        // Employee Registration Actions
+        // Employee Registration Actions - Allow unauthenticated access for registration
+        [AllowAnonymousRegistration]
         public async Task<IActionResult> Register(string token)
         {
             if (string.IsNullOrEmpty(token))
@@ -302,6 +305,7 @@ namespace Human_Resource_Management_System.Controllers
             }
         }
 
+        [AllowAnonymousRegistration]
         [HttpPost]
         public async Task<IActionResult> Register(EmployeeRegistrationViewModel model)
         {
