@@ -1,23 +1,40 @@
 using Microsoft.AspNetCore.Mvc;
 using Human_Resource_Management_System.Models;
+using Human_Resource_Management_System.Services;
 
 namespace Human_Resource_Management_System.Controllers
 {
     public class LoginController : Controller
     {
+        private readonly IUserService _userService;
+
+        public LoginController(IUserService userService)
+        {
+            _userService = userService;
+        }
+
         public IActionResult Index()
         {
+            // Clear any existing session
+            HttpContext.Session.Clear();
             return View();
         }
 
         [HttpPost]
-        public IActionResult Index(LoginViewModel model)
+        public async Task<IActionResult> Index(LoginViewModel model)
         {
             if (ModelState.IsValid)
             {
-                // TODO: Implement authentication logic
-                if (model.Email == "admin@hrms.com" && model.Password == "admin123")
+                var user = await _userService.AuthenticateAsync(model.Email, model.Password);
+                
+                if (user != null)
                 {
+                    // Store user info in session
+                    HttpContext.Session.SetString("UserId", user.UserId.ToString());
+                    HttpContext.Session.SetString("UserEmail", user.Email);
+                    HttpContext.Session.SetString("UserName", $"{user.FirstName} {user.LastName}");
+                    HttpContext.Session.SetString("UserRole", user.Role);
+                    
                     return RedirectToAction("Index", "Dashboard");
                 }
                 else
@@ -26,6 +43,12 @@ namespace Human_Resource_Management_System.Controllers
                 }
             }
             return View(model);
+        }
+
+        public IActionResult Logout()
+        {
+            HttpContext.Session.Clear();
+            return RedirectToAction("Index");
         }
     }
 }
