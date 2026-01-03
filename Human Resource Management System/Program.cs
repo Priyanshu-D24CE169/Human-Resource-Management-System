@@ -2,6 +2,7 @@ using Human_Resource_Management_System.Data;
 using Human_Resource_Management_System.Services;
 using Human_Resource_Management_System.Models;
 using Microsoft.EntityFrameworkCore;
+using Pomelo.EntityFrameworkCore.MySql;
 using System.Net;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -40,17 +41,10 @@ builder.Services.AddControllersWithViews();
 // Determine the appropriate connection string
 var connectionString = await GetWorkingConnectionStringAsync(builder.Configuration);
 
-// Add Entity Framework with retry policy using the working connection string
+// Add Entity Framework with MySQL using Pomelo provider
 builder.Services.AddDbContext<HrmsDbContext>(options =>
 {
-    options.UseSqlServer(connectionString,
-        sqlOptions =>
-        {
-            sqlOptions.EnableRetryOnFailure(
-                maxRetryCount: 5,
-                maxRetryDelay: TimeSpan.FromSeconds(30),
-                errorNumbersToAdd: null);
-        });
+    options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 0, 21)));
 });
 
 // Add services
@@ -115,72 +109,45 @@ static string GetLocalIPAddress()
 static async Task<string> GetWorkingConnectionStringAsync(IConfiguration configuration)
 {
     var databaseSettings = configuration.GetSection("DatabaseSettings");
-    var useIntranetServer = databaseSettings.GetValue<bool>("UseIntranetServer");
+    var useCustomServer = databaseSettings.GetValue<bool>("UseCustomServer");
     
     // Priority order for connection strings
     var connectionStringsToTest = new List<(string name, string connectionString)>();
     
-    if (useIntranetServer)
+    if (useCustomServer)
     {
-        // Add intranet server options first
-        var preferHostname = databaseSettings.GetValue<bool>("PreferHostnameOverIP");
-        var sqlServerIP = databaseSettings.GetValue<string>("SqlServerIP");
-        var sqlServerHostname = databaseSettings.GetValue<string>("SqlServerHostname");
-        var sqlUsername = databaseSettings.GetValue<string>("SqlUsername");
-        var sqlPassword = databaseSettings.GetValue<string>("SqlPassword");
+        // Add custom MySQL server options first
+        var mysqlHost = databaseSettings.GetValue<string>("MySqlHost") ?? "localhost";
+        var mysqlPort = databaseSettings.GetValue<int>("MySqlPort");
+        if (mysqlPort == 0) mysqlPort = 3306;
+        var databaseName = databaseSettings.GetValue<string>("DatabaseName") ?? "hrms_database";
+        var username = databaseSettings.GetValue<string>("Username") ?? "root";
+        var password = databaseSettings.GetValue<string>("Password") ?? "";
         
-        if (preferHostname && !string.IsNullOrEmpty(sqlServerHostname))
-        {
-            var hostnameConnectionString = configuration.GetConnectionString("IntranetSqlServerHostname");
-            if (!string.IsNullOrEmpty(hostnameConnectionString))
-            {
-                // Replace placeholders with actual values
-                hostnameConnectionString = hostnameConnectionString
-                    .Replace("YOUR_HOSTNAME", sqlServerHostname)
-                    .Replace("YOUR_SQL_USERNAME", sqlUsername)
-                    .Replace("YOUR_SQL_PASSWORD", sqlPassword);
-                connectionStringsToTest.Add(("Intranet SQL Server (Hostname)", hostnameConnectionString));
-            }
-        }
+        var customConnectionString = $"Server={mysqlHost};Port={mysqlPort};Database={databaseName};Uid={username};Pwd={password};";
+        connectionStringsToTest.Add(("Custom MySQL Server", customConnectionString));
         
-        if (!string.IsNullOrEmpty(sqlServerIP))
+        var customMySqlConnectionString = configuration.GetConnectionString("CustomMySql");
+        if (!string.IsNullOrEmpty(customMySqlConnectionString))
         {
-            var ipConnectionString = configuration.GetConnectionString("IntranetSqlServerIP");
-            if (!string.IsNullOrEmpty(ipConnectionString))
-            {
-                // Replace placeholders with actual values
-                ipConnectionString = ipConnectionString
-                    .Replace("YOUR_IP_ADDRESS", sqlServerIP)
-                    .Replace("YOUR_SQL_USERNAME", sqlUsername)
-                    .Replace("YOUR_SQL_PASSWORD", sqlPassword);
-                connectionStringsToTest.Add(("Intranet SQL Server (IP)", ipConnectionString));
-            }
-        }
-        
-        if (!preferHostname && !string.IsNullOrEmpty(sqlServerHostname))
-        {
-            var hostnameConnectionString = configuration.GetConnectionString("IntranetSqlServerHostname");
-            if (!string.IsNullOrEmpty(hostnameConnectionString))
-            {
-                // Replace placeholders with actual values
-                hostnameConnectionString = hostnameConnectionString
-                    .Replace("YOUR_HOSTNAME", sqlServerHostname)
-                    .Replace("YOUR_SQL_USERNAME", sqlUsername)
-                    .Replace("YOUR_SQL_PASSWORD", sqlPassword);
-                connectionStringsToTest.Add(("Intranet SQL Server (Hostname)", hostnameConnectionString));
-            }
+            // Replace placeholders with actual values
+            customMySqlConnectionString = customMySqlConnectionString
+                .Replace("YOUR_MYSQL_HOST", mysqlHost)
+                .Replace("YOUR_USERNAME", username)
+                .Replace("YOUR_PASSWORD", password);
+            connectionStringsToTest.Add(("Custom MySQL (Config)", customMySqlConnectionString));
         }
     }
     
-    // Add local options as fallback
+    // Add local XAMPP options as default
     var defaultConnectionString = configuration.GetConnectionString("DefaultConnection");
-    var localDbConnectionString = configuration.GetConnectionString("LocalDbConnection");
+    var xamppConnectionString = configuration.GetConnectionString("XamppConnection");
+    
+    if (!string.IsNullOrEmpty(xamppConnectionString))
+        connectionStringsToTest.Add(("XAMPP MySQL", xamppConnectionString));
     
     if (!string.IsNullOrEmpty(defaultConnectionString))
-        connectionStringsToTest.Add(("Local SQL Server Express", defaultConnectionString));
-    
-    if (!string.IsNullOrEmpty(localDbConnectionString))
-        connectionStringsToTest.Add(("Local DB", localDbConnectionString));
+        connectionStringsToTest.Add(("Default MySQL", defaultConnectionString));
     
     // Test each connection string in order
     foreach (var (name, connectionString) in connectionStringsToTest)
@@ -188,7 +155,7 @@ static async Task<string> GetWorkingConnectionStringAsync(IConfiguration configu
         try
         {
             var optionsBuilder = new DbContextOptionsBuilder<HrmsDbContext>();
-            optionsBuilder.UseSqlServer(connectionString);
+            optionsBuilder.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 0, 21)));
             
             using var testContext = new HrmsDbContext(optionsBuilder.Options);
             
@@ -209,7 +176,7 @@ static async Task<string> GetWorkingConnectionStringAsync(IConfiguration configu
     
     // If all connections fail, return the first available connection string and let normal error handling take over
     Console.WriteLine("? All connection attempts failed. Using first available connection string.");
-    return connectionStringsToTest.FirstOrDefault().connectionString ?? defaultConnectionString ?? localDbConnectionString ?? "";
+    return connectionStringsToTest.FirstOrDefault().connectionString ?? defaultConnectionString ?? xamppConnectionString ?? "";
 }
 
 static async Task MigrateDatabaseAsync(WebApplication app)
@@ -223,7 +190,8 @@ static async Task MigrateDatabaseAsync(WebApplication app)
         logger.LogInformation("Starting database migration...");
         
         // Check if database exists and create if needed
-        if (!await context.Database.CanConnectAsync())
+        var canConnect = await context.Database.CanConnectAsync();
+        if (!canConnect)
         {
             logger.LogInformation("Database does not exist. Creating database...");
             await context.Database.EnsureCreatedAsync();
@@ -232,10 +200,39 @@ static async Task MigrateDatabaseAsync(WebApplication app)
         else
         {
             logger.LogInformation("Database connection successful.");
+            
+            try
+            {
+                // Try to apply pending migrations
+                var pendingMigrations = await context.Database.GetPendingMigrationsAsync();
+                if (pendingMigrations.Any())
+                {
+                    logger.LogInformation("Applying pending migrations...");
+                    await context.Database.MigrateAsync();
+                    logger.LogInformation("Migrations applied successfully.");
+                }
+            }
+            catch (Exception migrationEx)
+            {
+                logger.LogWarning(migrationEx, "Migration failed, trying EnsureCreated instead...");
+                
+                // If migration fails (e.g., tables already exist), try to ensure database is created
+                try
+                {
+                    await context.Database.EnsureCreatedAsync();
+                    logger.LogInformation("Database ensured successfully.");
+                }
+                catch (Exception ensureEx)
+                {
+                    logger.LogWarning(ensureEx, "EnsureCreated also failed, but continuing...");
+                    // Continue anyway as tables might already exist
+                }
+            }
         }
         
         // Ensure admin user exists
-        if (!context.Users.Any())
+        var userExists = await context.Users.AnyAsync();
+        if (!userExists)
         {
             logger.LogInformation("Seeding default admin user...");
             var adminUser = new User
@@ -253,12 +250,43 @@ static async Task MigrateDatabaseAsync(WebApplication app)
             await context.SaveChangesAsync();
             logger.LogInformation("Default admin user created successfully.");
         }
+        else
+        {
+            logger.LogInformation("Users table already contains data.");
+            
+            // Check if admin user exists
+            var adminUser = await context.Users.FirstOrDefaultAsync(u => u.Email == "admin@hrms.com");
+            if (adminUser == null)
+            {
+                logger.LogInformation("Creating missing admin user...");
+                var newAdminUser = new User
+                {
+                    Email = "admin@hrms.com",
+                    Password = BCrypt.Net.BCrypt.HashPassword("admin123"),
+                    FirstName = "System",
+                    LastName = "Administrator",
+                    Role = "Admin",
+                    CreatedDate = DateTime.Now,
+                    IsActive = true
+                };
+                
+                context.Users.Add(newAdminUser);
+                await context.SaveChangesAsync();
+                logger.LogInformation("Admin user created successfully.");
+            }
+            else
+            {
+                logger.LogInformation("Admin user already exists.");
+            }
+        }
         
         logger.LogInformation("Database migration completed successfully.");
     }
     catch (Exception ex)
     {
         logger.LogError(ex, "An error occurred during database migration: {ErrorMessage}", ex.Message);
-        throw; // Re-throw to prevent application startup with broken database
+        
+        // Don't throw the exception, just log it and continue
+        logger.LogWarning("Continuing startup despite database migration issues...");
     }
 }

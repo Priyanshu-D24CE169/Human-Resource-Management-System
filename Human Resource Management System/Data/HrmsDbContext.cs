@@ -28,6 +28,7 @@ namespace Human_Resource_Management_System.Data
                 entity.Property(e => e.FirstName).HasMaxLength(50);
                 entity.Property(e => e.LastName).HasMaxLength(50);
                 entity.Property(e => e.Role).HasMaxLength(20);
+                entity.Property(e => e.Password).HasMaxLength(255); // Ensure adequate length for BCrypt hashes
             });
 
             // Configure Employee entity
@@ -35,7 +36,14 @@ namespace Human_Resource_Management_System.Data
             {
                 entity.HasKey(e => e.EmployeeId);
                 entity.HasIndex(e => e.Email).IsUnique();
-                entity.Property(e => e.Salary).HasColumnType("decimal(18,2)");
+                entity.Property(e => e.Salary).HasColumnType("decimal(10,2)"); // MySQL compatible decimal precision
+                entity.Property(e => e.FirstName).HasMaxLength(50);
+                entity.Property(e => e.LastName).HasMaxLength(50);
+                entity.Property(e => e.Email).HasMaxLength(100);
+                entity.Property(e => e.Phone).HasMaxLength(20);
+                entity.Property(e => e.Department).HasMaxLength(50);
+                entity.Property(e => e.Position).HasMaxLength(50);
+                entity.Property(e => e.Status).HasMaxLength(20);
             });
 
             // Configure Attendance entity
@@ -46,7 +54,8 @@ namespace Human_Resource_Management_System.Data
                       .WithMany(e => e.Attendances)
                       .HasForeignKey(e => e.EmployeeId)
                       .OnDelete(DeleteBehavior.Cascade);
-                entity.Property(e => e.WorkingHours).HasColumnType("decimal(18,2)");
+                entity.Property(e => e.WorkingHours).HasColumnType("decimal(5,2)");
+                entity.Property(e => e.Status).HasMaxLength(20);
             });
 
             // Configure Payroll entity
@@ -57,10 +66,11 @@ namespace Human_Resource_Management_System.Data
                       .WithMany(e => e.Payrolls)
                       .HasForeignKey(e => e.EmployeeId)
                       .OnDelete(DeleteBehavior.Cascade);
-                entity.Property(e => e.BasicSalary).HasColumnType("decimal(18,2)");
-                entity.Property(e => e.Allowances).HasColumnType("decimal(18,2)");
-                entity.Property(e => e.Deductions).HasColumnType("decimal(18,2)");
-                entity.Property(e => e.NetSalary).HasColumnType("decimal(18,2)");
+                entity.Property(e => e.BasicSalary).HasColumnType("decimal(10,2)");
+                entity.Property(e => e.Allowances).HasColumnType("decimal(10,2)");
+                entity.Property(e => e.Deductions).HasColumnType("decimal(10,2)");
+                entity.Property(e => e.NetSalary).HasColumnType("decimal(10,2)");
+                entity.Property(e => e.Status).HasMaxLength(20);
             });
 
             // Configure LeaveRequest entity
@@ -71,6 +81,9 @@ namespace Human_Resource_Management_System.Data
                       .WithMany()
                       .HasForeignKey(e => e.EmployeeId)
                       .OnDelete(DeleteBehavior.Cascade);
+                entity.Property(e => e.LeaveType).HasMaxLength(50);
+                entity.Property(e => e.Status).HasMaxLength(20);
+                entity.Property(e => e.Reason).HasMaxLength(500);
             });
 
             // Seed data - Note: DateTime.Now in seed data might cause issues, using fixed date instead
