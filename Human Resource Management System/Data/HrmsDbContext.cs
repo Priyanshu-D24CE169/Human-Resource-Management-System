@@ -36,7 +36,9 @@ namespace Human_Resource_Management_System.Data
             {
                 entity.HasKey(e => e.EmployeeId);
                 entity.HasIndex(e => e.Email).IsUnique();
+                entity.HasIndex(e => e.EmployeeCode).IsUnique();
                 entity.Property(e => e.Salary).HasColumnType("decimal(10,2)"); // MySQL compatible decimal precision
+                entity.Property(e => e.EmployeeCode).HasMaxLength(20);
                 entity.Property(e => e.FirstName).HasMaxLength(50);
                 entity.Property(e => e.LastName).HasMaxLength(50);
                 entity.Property(e => e.Email).HasMaxLength(100);
@@ -44,6 +46,13 @@ namespace Human_Resource_Management_System.Data
                 entity.Property(e => e.Department).HasMaxLength(50);
                 entity.Property(e => e.Position).HasMaxLength(50);
                 entity.Property(e => e.Status).HasMaxLength(20);
+                entity.Property(e => e.Address).HasMaxLength(200);
+                entity.Property(e => e.EmergencyContactName).HasMaxLength(100);
+                entity.Property(e => e.EmergencyContactPhone).HasMaxLength(20);
+                entity.Property(e => e.Gender).HasMaxLength(10);
+                entity.Property(e => e.Nationality).HasMaxLength(50);
+                entity.Property(e => e.ProfileImagePath).HasMaxLength(255);
+                entity.Property(e => e.RegistrationToken).HasMaxLength(100);
             });
 
             // Configure Attendance entity
@@ -104,11 +113,13 @@ namespace Human_Resource_Management_System.Data
                 }
             );
 
-            // Seed sample employees
-            modelBuilder.Entity<Employee>().HasData(
-                new Employee
+            // Seed sample employees - Simplified for compatibility
+            var sampleEmployees = new[]
+            {
+                new
                 {
                     EmployeeId = 1,
+                    EmployeeCode = "OIJODO20230001",
                     FirstName = "John",
                     LastName = "Doe",
                     Email = "john.doe@hrms.com",
@@ -116,13 +127,15 @@ namespace Human_Resource_Management_System.Data
                     Department = "IT",
                     Position = "Software Developer",
                     HireDate = new DateTime(2023, 1, 15),
-                    Salary = 75000,
+                    Salary = 75000m,
                     Status = "Active",
+                    IsRegistrationComplete = true,
                     CreatedDate = fixedDate
                 },
-                new Employee
+                new
                 {
                     EmployeeId = 2,
+                    EmployeeCode = "OIJASM20220001",
                     FirstName = "Jane",
                     LastName = "Smith",
                     Email = "jane.smith@hrms.com",
@@ -130,13 +143,15 @@ namespace Human_Resource_Management_System.Data
                     Department = "HR",
                     Position = "HR Manager",
                     HireDate = new DateTime(2022, 8, 20),
-                    Salary = 85000,
+                    Salary = 85000m,
                     Status = "Active",
+                    IsRegistrationComplete = true,
                     CreatedDate = fixedDate
                 },
-                new Employee
+                new
                 {
                     EmployeeId = 3,
+                    EmployeeCode = "OIMIJO20230002",
                     FirstName = "Mike",
                     LastName = "Johnson",
                     Email = "mike.johnson@hrms.com",
@@ -144,11 +159,30 @@ namespace Human_Resource_Management_System.Data
                     Department = "Finance",
                     Position = "Accountant",
                     HireDate = new DateTime(2023, 3, 10),
-                    Salary = 65000,
+                    Salary = 65000m,
                     Status = "Active",
+                    IsRegistrationComplete = false,
                     CreatedDate = fixedDate
                 }
-            );
+            };
+
+            // Only seed if no employees exist
+            modelBuilder.Entity<Employee>().HasData(sampleEmployees.Select(e => new Employee
+            {
+                EmployeeId = e.EmployeeId,
+                EmployeeCode = e.EmployeeCode,
+                FirstName = e.FirstName,
+                LastName = e.LastName,
+                Email = e.Email,
+                Phone = e.Phone,
+                Department = e.Department,
+                Position = e.Position,
+                HireDate = e.HireDate,
+                Salary = e.Salary,
+                Status = e.Status,
+                IsRegistrationComplete = e.IsRegistrationComplete,
+                CreatedDate = e.CreatedDate
+            }));
         }
     }
 }

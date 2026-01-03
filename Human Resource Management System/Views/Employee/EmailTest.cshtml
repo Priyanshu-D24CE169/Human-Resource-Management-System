@@ -1,0 +1,115 @@
+@{
+    ViewData["Title"] = "Email Test";
+    Layout = "_Layout";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4><i class="fas fa-envelope"></i> Email System Test</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle"></i> Test Email Configuration</h6>
+                        <p>This tool tests if the HRMS system can send emails using your Gmail SMTP settings.</p>
+                    </div>
+                    
+                    <div id="test-result" style="display: none;"></div>
+                    
+                    <form id="email-test-form">
+                        <div class="mb-3">
+                            <label for="test-email" class="form-label">Test Email Address</label>
+                            <input type="email" class="form-control" id="test-email" placeholder="your-email@gmail.com" required>
+                            <small class="form-text text-muted">Enter an email address you can access to receive the test email</small>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary" id="send-test-btn">
+                                <i class="fas fa-paper-plane"></i> Send Test Email
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div class="mt-4">
+                        <h6>Current SMTP Configuration:</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Host:</strong> smtp.gmail.com</li>
+                            <li><strong>Port:</strong> 587</li>
+                            <li><strong>SSL:</strong> Enabled</li>
+                            <li><strong>Sender:</strong> samarthbhalala@gmail.com</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            <i class="fas fa-lightbulb"></i> 
+                            If the test fails, check the troubleshooting guide or application logs for detailed error information.
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('email-test-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const testEmail = document.getElementById('test-email').value;
+    const sendBtn = document.getElementById('send-test-btn');
+    const resultDiv = document.getElementById('test-result');
+    
+    // Show loading state
+    sendBtn.disabled = true;
+    sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testing...';
+    resultDiv.style.display = 'none';
+    
+    try {
+        const response = await fetch('/Employee/TestEmailWithAddress?email=' + encodeURIComponent(testEmail), {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const result = await response.json();
+        
+        resultDiv.style.display = 'block';
+        if (result.success) {
+            resultDiv.className = 'alert alert-success';
+            resultDiv.innerHTML = `
+                <h6><i class="fas fa-check-circle"></i> Email Test Successful!</h6>
+                <p>${result.message}</p>
+                <p><strong>Next Step:</strong> Check your email inbox (and spam folder) for the test message.</p>
+            `;
+        } else {
+            resultDiv.className = 'alert alert-danger';
+            resultDiv.innerHTML = `
+                <h6><i class="fas fa-exclamation-circle"></i> Email Test Failed</h6>
+                <p>${result.message}</p>
+                <p><strong>Troubleshooting:</strong></p>
+                <ul>
+                    <li>Check that Gmail 2-factor authentication is enabled</li>
+                    <li>Verify the app password is correct</li>
+                    <li>Check Windows Firewall and antivirus settings</li>
+                    <li>Review application logs for detailed error information</li>
+                </ul>
+            `;
+        }
+    } catch (error) {
+        resultDiv.style.display = 'block';
+        resultDiv.className = 'alert alert-danger';
+        resultDiv.innerHTML = `
+            <h6><i class="fas fa-exclamation-triangle"></i> Test Error</h6>
+            <p>Error during test: ${error.message}</p>
+        `;
+    } finally {
+        // Reset button
+        sendBtn.disabled = false;
+        sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Test Email';
+    }
+});
+</script>

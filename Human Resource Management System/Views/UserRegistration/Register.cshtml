@@ -1,0 +1,468 @@
+@model Human_Resource_Management_System.Models.UserRegistrationViewModel
+@{
+    ViewData["Title"] = "User Registration";
+    Layout = null; // Standalone page
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Odoo India HRMS</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .registration-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .registration-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            max-width: 800px;
+            width: 100%;
+        }
+        .registration-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            padding: 40px 30px;
+        }
+        .registration-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        .registration-body {
+            padding: 40px;
+        }
+        .form-section {
+            margin-bottom: 40px;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            border-left: 5px solid #667eea;
+        }
+        .form-section h4 {
+            color: #333;
+            margin-bottom: 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+        }
+        .form-section h4 i {
+            margin-right: 10px;
+            color: #667eea;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-control {
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 12px 15px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.1rem;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        .progress-bar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .text-danger {
+            font-size: 0.875rem;
+            margin-top: 5px;
+        }
+        .age-display {
+            font-weight: bold;
+            color: #667eea;
+        }
+        .email-check {
+            position: relative;
+        }
+        .email-status {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .terms-section {
+            background: #e8f0fe;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .row {
+            margin-left: -10px;
+            margin-right: -10px;
+        }
+        .col-md-6 {
+            padding-left: 10px;
+            padding-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="registration-container">
+        <div class="registration-card">
+            <div class="registration-header">
+                <div style="font-size: 3rem; margin-bottom: 10px;">??</div>
+                <h1>Join Odoo India HRMS</h1>
+                <p style="font-size: 1.2rem; margin: 0; opacity: 0.9;">Complete Registration with All Details</p>
+            </div>
+
+            <div class="registration-body">
+                <form asp-action="Register" id="registrationForm" method="post">
+                    
+                    <!-- Personal Information Section -->
+                    <div class="form-section">
+                        <h4><i class="fas fa-user"></i> Personal Information</h4>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="FirstName" class="form-label">First Name *</label>
+                                    <input asp-for="FirstName" class="form-control" placeholder="Enter your first name" />
+                                    <span asp-validation-for="FirstName" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="LastName" class="form-label">Last Name *</label>
+                                    <input asp-for="LastName" class="form-control" placeholder="Enter your last name" />
+                                    <span asp-validation-for="LastName" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="DateOfBirth" class="form-label">Date of Birth *</label>
+                                    <input asp-for="DateOfBirth" class="form-control" type="date" id="dobInput" />
+                                    <span asp-validation-for="DateOfBirth" class="text-danger"></span>
+                                    <small class="text-muted">Age: <span id="ageDisplay" class="age-display">-</span></small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="Gender" class="form-label">Gender *</label>
+                                    <select asp-for="Gender" class="form-control">
+                                        <option value="">Select Gender</option>
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                    <span asp-validation-for="Gender" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="Nationality" class="form-label">Nationality</label>
+                            <input asp-for="Nationality" class="form-control" placeholder="Enter nationality" />
+                            <span asp-validation-for="Nationality" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <!-- Contact Information Section -->
+                    <div class="form-section">
+                        <h4><i class="fas fa-envelope"></i> Contact Information</h4>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group email-check">
+                                    <label asp-for="Email" class="form-label">Email Address *</label>
+                                    <input asp-for="Email" class="form-control" type="email" placeholder="Enter your email address" id="emailInput" />
+                                    <span class="email-status" id="emailStatus"></span>
+                                    <span asp-validation-for="Email" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="Phone" class="form-label">Phone Number *</label>
+                                    <input asp-for="Phone" class="form-control" placeholder="Enter your phone number" />
+                                    <span asp-validation-for="Phone" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="Address" class="form-label">Address *</label>
+                            <textarea asp-for="Address" class="form-control" rows="3" placeholder="Enter your complete address"></textarea>
+                            <span asp-validation-for="Address" class="text-danger"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label asp-for="City" class="form-label">City *</label>
+                                    <input asp-for="City" class="form-control" placeholder="Enter city" />
+                                    <span asp-validation-for="City" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label asp-for="State" class="form-label">State *</label>
+                                    <input asp-for="State" class="form-control" placeholder="Enter state" />
+                                    <span asp-validation-for="State" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label asp-for="ZipCode" class="form-label">ZIP Code *</label>
+                                    <input asp-for="ZipCode" class="form-control" placeholder="Enter ZIP code" />
+                                    <span asp-validation-for="ZipCode" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Employment Information Section -->
+                    <div class="form-section">
+                        <h4><i class="fas fa-briefcase"></i> Employment Information</h4>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="Department" class="form-label">Department *</label>
+                                    <select asp-for="Department" class="form-control" id="departmentSelect">
+                                        <option value="">Select Department</option>
+                                    </select>
+                                    <span asp-validation-for="Department" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="Position" class="form-label">Position *</label>
+                                    <select asp-for="Position" class="form-control" id="positionSelect" disabled>
+                                        <option value="">Select Position</option>
+                                    </select>
+                                    <span asp-validation-for="Position" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="HireDate" class="form-label">Hire Date *</label>
+                                    <input asp-for="HireDate" class="form-control" type="date" />
+                                    <span asp-validation-for="HireDate" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="Salary" class="form-label">Annual Salary (?) *</label>
+                                    <input asp-for="Salary" class="form-control" type="number" placeholder="Enter annual salary" />
+                                    <span asp-validation-for="Salary" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Emergency Contact Section -->
+                    <div class="form-section">
+                        <h4><i class="fas fa-phone-alt"></i> Emergency Contact</h4>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="EmergencyContactName" class="form-label">Emergency Contact Name</label>
+                                    <input asp-for="EmergencyContactName" class="form-control" placeholder="Enter emergency contact name" />
+                                    <span asp-validation-for="EmergencyContactName" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="EmergencyContactPhone" class="form-label">Emergency Contact Phone</label>
+                                    <input asp-for="EmergencyContactPhone" class="form-control" placeholder="Enter emergency contact phone" />
+                                    <span asp-validation-for="EmergencyContactPhone" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Security Section -->
+                    <div class="form-section">
+                        <h4><i class="fas fa-lock"></i> Account Security</h4>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="Password" class="form-label">Password *</label>
+                                    <input asp-for="Password" class="form-control" type="password" placeholder="Create a strong password" />
+                                    <span asp-validation-for="Password" class="text-danger"></span>
+                                    <small class="text-muted">Minimum 6 characters required</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="ConfirmPassword" class="form-label">Confirm Password *</label>
+                                    <input asp-for="ConfirmPassword" class="form-control" type="password" placeholder="Confirm your password" />
+                                    <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Terms and Conditions Section -->
+                    <div class="terms-section">
+                        <div class="form-check mb-3">
+                            <input asp-for="AgreeToTerms" class="form-check-input" type="checkbox" />
+                            <label asp-for="AgreeToTerms" class="form-check-label">
+                                I agree to the <a href="#" target="_blank">Terms and Conditions</a> and <a href="#" target="_blank">Privacy Policy</a> *
+                            </label>
+                            <span asp-validation-for="AgreeToTerms" class="text-danger d-block"></span>
+                        </div>
+
+                        <div class="form-check">
+                            <input asp-for="SubscribeToNewsletter" class="form-check-input" type="checkbox" />
+                            <label asp-for="SubscribeToNewsletter" class="form-check-label">
+                                Subscribe to company newsletters and updates
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Hidden fields -->
+                    <input asp-for="Role" type="hidden" />
+                    <input asp-for="Status" type="hidden" />
+
+                    <!-- Submit Button -->
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                            <i class="fas fa-user-plus"></i> Complete Registration
+                        </button>
+                    </div>
+                </form>
+
+                <div class="text-center mt-4">
+                    <p class="text-muted">Already have an account? <a href="/Login" class="text-decoration-none">Sign In</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            // Age calculation
+            $('#dobInput').on('change', function () {
+                var dob = new Date($(this).val());
+                var today = new Date();
+                var age = today.getFullYear() - dob.getFullYear();
+                var monthDiff = today.getMonth() - dob.getMonth();
+                
+                if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+                    age--;
+                }
+                
+                $('#ageDisplay').text(age + ' years');
+                
+                if (age < 18) {
+                    $('#ageDisplay').addClass('text-danger').removeClass('text-success');
+                } else if (age > 65) {
+                    $('#ageDisplay').addClass('text-warning').removeClass('text-success');
+                } else {
+                    $('#ageDisplay').addClass('text-success').removeClass('text-danger text-warning');
+                }
+            });
+
+            // Email availability check
+            let emailTimeout;
+            $('#emailInput').on('input', function () {
+                clearTimeout(emailTimeout);
+                var email = $(this).val();
+                
+                if (email.length < 5) {
+                    $('#emailStatus').html('');
+                    return;
+                }
+                
+                $('#emailStatus').html('<i class="fas fa-spinner fa-spin text-muted"></i>');
+                
+                emailTimeout = setTimeout(function () {
+                    $.post('/UserRegistration/CheckEmailAvailability', { email: email })
+                        .done(function (response) {
+                            if (response.available) {
+                                $('#emailStatus').html('<i class="fas fa-check text-success"></i>');
+                            } else {
+                                $('#emailStatus').html('<i class="fas fa-times text-danger"></i>');
+                            }
+                        })
+                        .fail(function () {
+                            $('#emailStatus').html('<i class="fas fa-exclamation-triangle text-warning"></i>');
+                        });
+                }, 1000);
+            });
+
+            // Load departments
+            $.get('/UserRegistration/GetDepartments')
+                .done(function (departments) {
+                    var departmentSelect = $('#departmentSelect');
+                    $.each(departments, function (index, department) {
+                        departmentSelect.append('<option value="' + department + '">' + department + '</option>');
+                    });
+                });
+
+            // Load positions based on department
+            $('#departmentSelect').on('change', function () {
+                var department = $(this).val();
+                var positionSelect = $('#positionSelect');
+                
+                positionSelect.empty().append('<option value="">Select Position</option>');
+                
+                if (department) {
+                    positionSelect.prop('disabled', false);
+                    
+                    $.get('/UserRegistration/GetPositions', { department: department })
+                        .done(function (positions) {
+                            $.each(positions, function (index, position) {
+                                positionSelect.append('<option value="' + position + '">' + position + '</option>');
+                            });
+                        });
+                } else {
+                    positionSelect.prop('disabled', true);
+                }
+            });
+
+            // Form submission with loading state
+            $('#registrationForm').on('submit', function () {
+                $('#submitBtn').prop('disabled', true)
+                    .html('<i class="fas fa-spinner fa-spin"></i> Processing Registration...');
+            });
+
+            // Trigger age calculation if DOB is pre-filled
+            if ($('#dobInput').val()) {
+                $('#dobInput').trigger('change');
+            }
+        });
+    </script>
+</body>
+</html>

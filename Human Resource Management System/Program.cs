@@ -74,6 +74,9 @@ builder.Services.AddDbContext<HrmsDbContext>(options =>
 
 // Add services
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IEmployeeService, EmployeeService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IValidationService, ValidationService>();
 
 // Add session support for authentication
 builder.Services.AddSession(options =>
@@ -249,48 +252,14 @@ static async Task MigrateDatabaseAsync(WebApplication app)
     {
         logger.LogInformation("??? Starting database migration...");
         
-        // Check if database exists and create if needed
-        var canConnect = await context.Database.CanConnectAsync();
-        if (!canConnect)
-        {
-            logger.LogInformation("?? Database does not exist. Creating database...");
-            await context.Database.EnsureCreatedAsync();
-            logger.LogInformation("? Database created successfully.");
-        }
-        else
-        {
-            logger.LogInformation("? Database connection successful.");
-            
-            try
-            {
-                // Try to apply pending migrations
-                var pendingMigrations = await context.Database.GetPendingMigrationsAsync();
-                if (pendingMigrations.Any())
-                {
-                    logger.LogInformation("?? Applying pending migrations...");
-                    await context.Database.MigrateAsync();
-                    logger.LogInformation("? Migrations applied successfully.");
-                }
-            }
-            catch (Exception migrationEx)
-            {
-                logger.LogWarning(migrationEx, "?? Migration failed, trying EnsureCreated instead...");
-                
-                // If migration fails (e.g., tables already exist), try to ensure database is created
-                try
-                {
-                    await context.Database.EnsureCreatedAsync();
-                    logger.LogInformation("? Database ensured successfully.");
-                }
-                catch (Exception ensureEx)
-                {
-                    logger.LogWarning(ensureEx, "?? EnsureCreated also failed, but continuing...");
-                    // Continue anyway as tables might already exist
-                }
-            }
-        }
+        // Drop and recreate database to ensure proper schema
+        logger.LogWarning("?? Dropping existing database to ensure schema compatibility...");
+        await context.Database.EnsureDeletedAsync();
         
-        // Ensure admin user exists with correct password
+        logger.LogInformation("?? Creating database with updated schema...");
+        await context.Database.EnsureCreatedAsync();
+        
+        // Create admin user
         var adminUser = await context.Users.FirstOrDefaultAsync(u => u.Email == "admin@hrms.com");
         if (adminUser == null)
         {
@@ -309,42 +278,140 @@ static async Task MigrateDatabaseAsync(WebApplication app)
             context.Users.Add(newAdminUser);
             await context.SaveChangesAsync();
             logger.LogInformation("? Admin user created successfully.");
-            logger.LogInformation("?? Admin credentials: admin@hrms.com / admin123");
         }
         else
         {
-            logger.LogInformation($"?? Admin user already exists: {adminUser.Email}");
-            
-            // Ensure admin is active
-            if (!adminUser.IsActive)
-            {
-                adminUser.IsActive = true;
-                logger.LogInformation("? Admin user activated.");
-            }
-            
-            // Fix password hash - regenerate with proper BCrypt
-            var correctPasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123");
-            if (adminUser.Password != correctPasswordHash)
-            {
-                logger.LogInformation("?? Updating admin password hash...");
-                adminUser.Password = correctPasswordHash;
-                logger.LogInformation($"?? Old hash: {adminUser.Password.Substring(0, 20)}...");
-                logger.LogInformation($"?? New hash: {correctPasswordHash.Substring(0, 20)}...");
-            }
-            
+            adminUser.Password = BCrypt.Net.BCrypt.HashPassword("admin123");
+            adminUser.IsActive = true;
             await context.SaveChangesAsync();
-            logger.LogInformation("? Admin user updated successfully.");
-            logger.LogInformation($"?? Admin status: Active={adminUser.IsActive}, Role={adminUser.Role}");
+            logger.LogInformation("? Admin user verified and updated.");
         }
         
+        // Create demo employee users
+        logger.LogInformation("?? Creating demo employee users...");
+        
+        // Check existing employees to avoid conflicts
+        var existingEmployees = await context.Employees.ToListAsync();
+        var existingUsers = await context.Users.ToListAsync();
+        
+        logger.LogInformation($"Found {existingEmployees.Count} existing employees");
+        logger.LogInformation($"Found {existingUsers.Count} existing users");
+
+        // Create user accounts for existing employees that don't have login accounts
+        var employeesToCreateUsers = new List<(Employee employee, string password)>
+        {
+            (existingEmployees.FirstOrDefault(e => e.Email == "john.doe@hrms.com"), "john123"),
+            (existingEmployees.FirstOrDefault(e => e.Email == "jane.smith@hrms.com"), "jane123"),
+            (existingEmployees.FirstOrDefault(e => e.Email == "mike.johnson@hrms.com"), "mike123")
+        };
+
+        foreach (var (employee, password) in employeesToCreateUsers)
+        {
+            if (employee != null)
+            {
+                // Check if user already exists
+                var existingUser = existingUsers.FirstOrDefault(u => u.Email.ToLower() == employee.Email.ToLower());
+                if (existingUser == null)
+                {
+                    // Update employee to have complete profile
+                    employee.IsRegistrationComplete = true;
+                    employee.Address = employee.Department == "IT" ? "123 Tech Street, Bangalore, Karnataka, 560001" :
+                                    employee.Department == "HR" ? "456 HR Avenue, Mumbai, Maharashtra, 400001" :
+                                    "789 Finance Plaza, Delhi, Delhi, 110001";
+                    employee.EmergencyContactName = $"{employee.FirstName} Family";
+                    employee.EmergencyContactPhone = "+91-9876543200";
+                    employee.DateOfBirth = new DateTime(1990, 1, 1);
+                    employee.Gender = employee.FirstName == "Jane" ? "Female" : "Male";
+                    employee.Nationality = "Indian";
+
+                    // Create user account
+                    var newUser = new User
+                    {
+                        Email = employee.Email,
+                        Password = BCrypt.Net.BCrypt.HashPassword(password),
+                        FirstName = employee.FirstName,
+                        LastName = employee.LastName,
+                        Role = "Employee",
+                        CreatedDate = DateTime.Now,
+                        IsActive = true
+                    };
+                    
+                    context.Users.Add(newUser);
+                    logger.LogInformation($"? Created user account for: {employee.FirstName} {employee.LastName}");
+                }
+                else
+                {
+                    logger.LogInformation($"User already exists for: {employee.FirstName} {employee.LastName}");
+                }
+            }
+        }
+
+        // Add one additional demo employee with user account
+        var additionalEmployee = new Employee
+        {
+            EmployeeCode = "OIPAPA20240001",
+            FirstName = "Priya",
+            LastName = "Patel",
+            Email = "priya.patel@hrms.com",
+            Phone = "+91-9876543216",
+            Department = "Marketing",
+            Position = "Marketing Specialist",
+            HireDate = new DateTime(2024, 1, 5),
+            Salary = 55000,
+            Status = "Active",
+            IsRegistrationComplete = true,
+            Address = "321 Marketing Hub, Pune, Maharashtra, 411001",
+            EmergencyContactName = "Raj Patel",
+            EmergencyContactPhone = "+91-9876543217",
+            DateOfBirth = new DateTime(1995, 7, 12),
+            Gender = "Female",
+            Nationality = "Indian",
+            CreatedDate = DateTime.Now
+        };
+
+        var additionalUser = new User
+        {
+            Email = "priya.patel@hrms.com",
+            Password = BCrypt.Net.BCrypt.HashPassword("priya123"),
+            FirstName = "Priya",
+            LastName = "Patel",
+            Role = "Employee",
+            CreatedDate = DateTime.Now,
+            IsActive = true
+        };
+
+        // Check if this employee doesn't already exist
+        var existingPriya = await context.Employees.FirstOrDefaultAsync(e => e.Email == "priya.patel@hrms.com");
+        if (existingPriya == null)
+        {
+            context.Employees.Add(additionalEmployee);
+            context.Users.Add(additionalUser);
+            logger.LogInformation("? Created additional demo employee: Priya Patel");
+        }
+
+        await context.SaveChangesAsync();
+        
+        logger.LogInformation("? Demo employees and users created successfully!");
+        logger.LogInformation("");
+        logger.LogInformation("?? DEMO LOGIN CREDENTIALS:");
+        logger.LogInformation("?? ==========================================");
+        logger.LogInformation("?? ADMIN LOGIN:");
+        logger.LogInformation("   ?? Email: admin@hrms.com");
+        logger.LogInformation("   ?? Password: admin123");
+        logger.LogInformation("");
+        logger.LogInformation("?? EMPLOYEE LOGINS:");
+        logger.LogInformation("   ?? john.doe@hrms.com / ?? john123 (Software Developer)");
+        logger.LogInformation("   ?? jane.smith@hrms.com / ?? jane123 (HR Manager)");
+        logger.LogInformation("   ?? mike.johnson@hrms.com / ?? mike123 (Finance Analyst)");
+        logger.LogInformation("   ?? priya.patel@hrms.com / ?? priya123 (Marketing Specialist)");
+        logger.LogInformation("?? ==========================================");
+        logger.LogInformation("");
         logger.LogInformation("?? Database migration completed successfully.");
-        logger.LogInformation("?? You can now login with: admin@hrms.com / admin123");
+        logger.LogInformation("?? All users are ready to login!");
     }
     catch (Exception ex)
     {
         logger.LogError(ex, "?? An error occurred during database migration: {ErrorMessage}", ex.Message);
-        
-        // Don't throw the exception, just log it and continue
         logger.LogWarning("?? Continuing startup despite database migration issues...");
         logger.LogWarning("?? Please ensure:");
         logger.LogWarning("   - MySQL server is running");

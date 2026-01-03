@@ -1,0 +1,274 @@
+@model Human_Resource_Management_System.Models.EmployeeProfileEditViewModel
+@{
+    ViewData["Title"] = "Edit Profile";
+    Layout = "_Layout";
+}
+
+<style>
+    .profile-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 30px;
+        margin-bottom: 30px;
+    }
+    .form-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 30px;
+        margin-bottom: 20px;
+    }
+    .form-label {
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 8px;
+    }
+    .form-control {
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 12px 16px;
+        transition: all 0.3s ease;
+    }
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 8px;
+        padding: 12px 30px;
+        font-weight: 600;
+    }
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 15px rgba(102, 126, 234, 0.3);
+    }
+    .profile-upload {
+        border: 2px dashed #e5e7eb;
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .profile-upload:hover {
+        border-color: #667eea;
+        background-color: #f8fafc;
+    }
+</style>
+
+<div class="container">
+    <div class="profile-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2><i class="fas fa-user-edit me-3"></i>Edit Your Profile</h2>
+                <p class="mb-0">Update your personal information and keep your profile current</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a asp-action="Index" class="btn btn-light">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(TempData["Success"] as string))
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            <i class="fas fa-check-circle me-2"></i>@TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(TempData["Error"] as string))
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            <i class="fas fa-exclamation-circle me-2"></i>@TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <form asp-action="EditProfile" method="post" enctype="multipart/form-data" id="profileForm">
+        <input asp-for="EmployeeId" type="hidden" />
+        
+        <div class="row">
+            <!-- Personal Information -->
+            <div class="col-lg-8">
+                <div class="form-card">
+                    <h5 class="mb-4"><i class="fas fa-user me-2 text-primary"></i>Personal Information</h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="Phone" class="form-label">Phone Number</label>
+                                <input asp-for="Phone" class="form-control" type="tel" placeholder="+91-9876543210" required />
+                                <span asp-validation-for="Phone" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="DateOfBirth" class="form-label">Date of Birth</label>
+                                <input asp-for="DateOfBirth" class="form-control" type="date" required />
+                                <span asp-validation-for="DateOfBirth" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="Gender" class="form-label">Gender</label>
+                                <select asp-for="Gender" class="form-control" required>
+                                    <option value="">Select Gender</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                                <span asp-validation-for="Gender" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="Nationality" class="form-label">Nationality</label>
+                                <input asp-for="Nationality" class="form-control" placeholder="Indian" />
+                                <span asp-validation-for="Nationality" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Address" class="form-label">Address</label>
+                        <textarea asp-for="Address" class="form-control" rows="3" required 
+                                  placeholder="Enter your complete address including city, state, and postal code"></textarea>
+                        <span asp-validation-for="Address" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <!-- Emergency Contact -->
+                <div class="form-card">
+                    <h5 class="mb-4"><i class="fas fa-phone me-2 text-primary"></i>Emergency Contact</h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="EmergencyContactName" class="form-label">Emergency Contact Name</label>
+                                <input asp-for="EmergencyContactName" class="form-control" required 
+                                       placeholder="Full name of emergency contact" />
+                                <span asp-validation-for="EmergencyContactName" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="EmergencyContactPhone" class="form-label">Emergency Contact Phone</label>
+                                <input asp-for="EmergencyContactPhone" class="form-control" type="tel" required 
+                                       placeholder="+91-9876543210" />
+                                <span asp-validation-for="EmergencyContactPhone" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Image & Actions -->
+            <div class="col-lg-4">
+                <div class="form-card">
+                    <h5 class="mb-4"><i class="fas fa-camera me-2 text-primary"></i>Profile Picture</h5>
+                    
+                    <div class="profile-upload mb-3" onclick="document.getElementById('profileImageInput').click()">
+                        <i class="fas fa-camera fa-2x mb-2 text-muted"></i>
+                        <p class="mb-1">Click to upload profile picture</p>
+                        <small class="text-muted">PNG, JPG up to 5MB</small>
+                    </div>
+                    <input asp-for="ProfileImage" type="file" id="profileImageInput" style="display: none;" 
+                           accept="image/*" />
+                    
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle me-2"></i>Profile Tips</h6>
+                        <ul class="mb-0 small">
+                            <li>Keep your information up to date</li>
+                            <li>Use a professional profile picture</li>
+                            <li>Verify emergency contact details</li>
+                            <li>Complete all required fields</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="form-card">
+                    <h5 class="mb-4"><i class="fas fa-cog me-2 text-primary"></i>Actions</h5>
+                    
+                    <button type="submit" class="btn btn-primary w-100 mb-3">
+                        <i class="fas fa-save"></i> Save Changes
+                    </button>
+                    
+                    <a asp-action="Profile" class="btn btn-outline-secondary w-100 mb-2">
+                        <i class="fas fa-eye"></i> View Profile
+                    </a>
+                    
+                    <a asp-action="Index" class="btn btn-outline-secondary w-100">
+                        <i class="fas fa-home"></i> Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        // Profile image preview
+        document.getElementById('profileImageInput').addEventListener('change', function() {
+            const file = this.files[0];
+            const profileUpload = document.querySelector('.profile-upload');
+            
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    profileUpload.innerHTML = `
+                        <img src="${e.target.result}" alt="Profile Preview" 
+                             style="max-width: 150px; max-height: 150px; border-radius: 8px; margin-bottom: 10px;">
+                        <p class="mb-1">${file.name}</p>
+                        <small class="text-muted">Click to change</small>
+                    `;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Form validation
+        document.getElementById('profileForm').addEventListener('submit', function(e) {
+            const phone = document.querySelector('input[name="Phone"]').value;
+            const emergencyPhone = document.querySelector('input[name="EmergencyContactPhone"]').value;
+            
+            // Basic phone validation
+            const phoneRegex = /^\+?[1-9]\d{1,14}$/;
+            if (!phoneRegex.test(phone.replace(/[\s\-\(\)]/g, ''))) {
+                e.preventDefault();
+                alert('Please enter a valid phone number with country code');
+                return false;
+            }
+            
+            if (!phoneRegex.test(emergencyPhone.replace(/[\s\-\(\)]/g, ''))) {
+                e.preventDefault();
+                alert('Please enter a valid emergency contact phone number');
+                return false;
+            }
+        });
+
+        // Auto-format phone numbers
+        function formatPhoneNumber(input) {
+            input.addEventListener('input', function() {
+                let value = this.value.replace(/\D/g, '');
+                if (value.startsWith('91') && value.length === 12) {
+                    value = '+91-' + value.substring(2, 7) + '-' + value.substring(7);
+                    this.value = value;
+                }
+            });
+        }
+
+        formatPhoneNumber(document.querySelector('input[name="Phone"]'));
+        formatPhoneNumber(document.querySelector('input[name="EmergencyContactPhone"]'));
+    </script>
+}

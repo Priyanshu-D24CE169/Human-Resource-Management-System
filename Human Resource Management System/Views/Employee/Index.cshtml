@@ -6,62 +6,109 @@
 <style>
     .employee-card {
         background: white;
-        border-radius: 10px;
+        border-radius: 12px;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         transition: transform 0.3s ease;
+        border: 1px solid #e5e7eb;
     }
     .employee-card:hover {
         transform: translateY(-2px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
     }
     .status-badge {
         padding: 4px 12px;
         border-radius: 15px;
-        font-size: 0.8rem;
-        font-weight: bold;
+        font-size: 0.75rem;
+        font-weight: 600;
     }
     .status-active {
         background: #d4edda;
         color: #155724;
     }
+    .status-inactive {
+        background: #f8d7da;
+        color: #721c24;
+    }
     .status-leave {
         background: #fff3cd;
         color: #856404;
     }
+    .registration-pending {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    .registration-complete {
+        background: #dcfce7;
+        color: #166534;
+    }
     .search-box {
         border-radius: 25px;
         border: 2px solid #eee;
-        padding: 10px 20px;
+        padding: 12px 20px;
+        font-size: 0.95rem;
     }
     .search-box:focus {
-        border-color: #667eea;
+        border-color: #6366f1;
         box-shadow: none;
+    }
+    .employee-code {
+        font-family: 'Courier New', monospace;
+        background: #f3f4f6;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        font-weight: bold;
+        color: #374151;
+    }
+    .salary-amount {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #059669;
     }
 </style>
 
 <div class="row mb-4">
     <div class="col-md-6">
-        <h2 class="mb-0">Employee Management</h2>
-        <p class="text-muted">Manage your workforce efficiently</p>
+        <h2 class="mb-0"><i class="fas fa-users me-2 text-primary"></i>Employee Management</h2>
+        <p class="text-muted">Manage your workforce with Odoo India HRMS</p>
     </div>
     <div class="col-md-6 text-end">
         <a asp-action="Create" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Add New Employee
+            <i class="fas fa-user-plus"></i> Add New Employee
         </a>
     </div>
 </div>
 
+@if (!string.IsNullOrEmpty(TempData["Success"] as string))
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        <i class="fas fa-check-circle me-2"></i>@TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(TempData["Error"] as string))
+{
+    <div class="alert alert-danger alert-dismissible fade show">
+        <i class="fas fa-exclamation-circle me-2"></i>@TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
 <!-- Search and Filter -->
 <div class="row mb-4">
-    <div class="col-md-6">
-        <input type="text" class="form-control search-box" id="searchEmployee" placeholder="Search employees...">
+    <div class="col-md-4">
+        <input type="text" class="form-control search-box" id="searchEmployee" placeholder="?? Search employees...">
     </div>
     <div class="col-md-3">
         <select class="form-select" id="departmentFilter">
             <option value="">All Departments</option>
-            <option value="IT">IT</option>
-            <option value="HR">HR</option>
+            <option value="IT">Information Technology</option>
+            <option value="HR">Human Resources</option>
             <option value="Finance">Finance</option>
             <option value="Sales">Sales</option>
+            <option value="Marketing">Marketing</option>
+            <option value="Operations">Operations</option>
         </select>
     </div>
     <div class="col-md-3">
@@ -69,7 +116,14 @@
             <option value="">All Status</option>
             <option value="Active">Active</option>
             <option value="On Leave">On Leave</option>
+            <option value="Inactive">Inactive</option>
         </select>
+    </div>
+    <div class="col-md-2">
+        <span class="badge bg-info text-dark">
+            <i class="fas fa-users me-1"></i>
+            <span id="employeeCount">@Model.Count</span> employees
+        </span>
     </div>
 </div>
 
@@ -77,47 +131,84 @@
 <div class="row" id="employeeGrid">
     @foreach (var employee in Model)
     {
-        <div class="col-md-4 mb-4 employee-item" data-department="@employee.Department" data-status="@employee.Status" data-name="@employee.Name.ToLower()">
+        <div class="col-lg-4 col-md-6 mb-4 employee-item" 
+             data-department="@employee.Department" 
+             data-status="@employee.Status" 
+             data-name="@employee.FirstName.ToLower() @employee.LastName.ToLower()"
+             data-code="@employee.EmployeeCode.ToLower()">
             <div class="employee-card p-4">
-                <div class="d-flex align-items-center mb-3">
-                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                        <strong>@employee.Name.Split(' ').Select(n => n[0]).Take(2).Aggregate("", (acc, c) => acc + c)</strong>
+                <div class="d-flex align-items-start mb-3">
+                    <div class="rounded-circle bg-gradient bg-primary text-white d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; flex-shrink: 0;">
+                        <strong>@(employee.FirstName.FirstOrDefault())@(employee.LastName.FirstOrDefault())</strong>
                     </div>
                     <div class="ms-3 flex-grow-1">
-                        <h6 class="mb-0">@employee.Name</h6>
-                        <small class="text-muted">@employee.Id</small>
+                        <h6 class="mb-1 fw-bold">@employee.FirstName @employee.LastName</h6>
+                        <div class="employee-code mb-1">@employee.EmployeeCode</div>
+                        <small class="text-muted"><i class="fas fa-envelope me-1"></i>@employee.Email</small>
                     </div>
                     <div class="dropdown">
-                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle border-0" type="button" data-bs-toggle="dropdown">
                             <i class="fas fa-ellipsis-v"></i>
                         </button>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" asp-action="Edit" asp-route-id="@employee.Id"><i class="fas fa-edit"></i> Edit</a></li>
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-eye"></i> View Details</a></li>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" asp-action="Details" asp-route-id="@employee.EmployeeId">
+                                <i class="fas fa-eye me-2"></i>View Details
+                            </a></li>
+                            <li><a class="dropdown-item" asp-action="Edit" asp-route-id="@employee.EmployeeId">
+                                <i class="fas fa-edit me-2"></i>Edit
+                            </a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item text-danger" href="#"><i class="fas fa-trash"></i> Delete</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="resendRegistration(@employee.EmployeeId)">
+                                <i class="fas fa-paper-plane me-2"></i>Resend Registration
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="#" onclick="deleteEmployee(@employee.EmployeeId, '@employee.EmployeeCode')">
+                                <i class="fas fa-user-slash me-2"></i>Deactivate
+                            </a></li>
                         </ul>
                     </div>
                 </div>
                 
-                <div class="mb-2">
-                    <strong>Position:</strong> @employee.Position
-                </div>
-                <div class="mb-2">
-                    <strong>Department:</strong> @employee.Department
-                </div>
-                <div class="mb-2">
-                    <strong>Email:</strong> @employee.Email
-                </div>
-                <div class="mb-3">
-                    <strong>Join Date:</strong> @employee.JoinDate.ToString("MMM dd, yyyy")
+                <div class="row g-2 mb-3">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">Position:</small>
+                            <span class="fw-medium">@employee.Position</span>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">Department:</small>
+                            <span class="badge bg-light text-dark">@employee.Department</span>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">Join Date:</small>
+                            <span>@employee.HireDate.ToString("MMM dd, yyyy")</span>
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="d-flex justify-content-between align-items-center">
-                    <span class="status-badge @(employee.Status == "Active" ? "status-active" : "status-leave")">
+                    <span class="status-badge @(employee.Status.ToLower() switch 
+                                              {
+                                                  "active" => "status-active",
+                                                  "inactive" => "status-inactive", 
+                                                  _ => "status-leave"
+                                              })">
+                        <i class="fas @(employee.Status.ToLower() switch 
+                                      {
+                                          "active" => "fa-check-circle",
+                                          "inactive" => "fa-times-circle",
+                                          _ => "fa-clock"
+                                      }) me-1"></i>
                         @employee.Status
                     </span>
-                    <span class="fw-bold">?@employee.Salary.ToString("N0")</span>
+                    <div class="text-end">
+                        <div class="salary-amount">?@employee.Salary.ToString("N0")</div>
+                        <small class="text-muted">Annual</small>
+                    </div>
                 </div>
             </div>
         </div>
@@ -126,12 +217,32 @@
 
 <!-- Empty State -->
 <div class="text-center mt-5" id="emptyState" style="display: none;">
-    <i class="fas fa-users fa-3x text-muted mb-3"></i>
+    <div class="mb-4">
+        <i class="fas fa-search fa-4x text-muted opacity-50"></i>
+    </div>
     <h5>No employees found</h5>
     <p class="text-muted">Try adjusting your search or filter criteria</p>
+    <a asp-action="Create" class="btn btn-outline-primary">
+        <i class="fas fa-user-plus"></i> Add Your First Employee
+    </a>
 </div>
 
+@if (!Model.Any())
+{
+    <div class="text-center mt-5">
+        <div class="mb-4">
+            <i class="fas fa-users fa-4x text-muted opacity-50"></i>
+        </div>
+        <h5>No employees yet</h5>
+        <p class="text-muted">Start building your team by adding employees</p>
+        <a asp-action="Create" class="btn btn-primary btn-lg">
+            <i class="fas fa-user-plus"></i> Add Your First Employee
+        </a>
+    </div>
+}
+
 @section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         // Search and filter functionality
         document.getElementById('searchEmployee').addEventListener('input', filterEmployees);
@@ -148,10 +259,11 @@
 
             employees.forEach(employee => {
                 const name = employee.getAttribute('data-name');
+                const code = employee.getAttribute('data-code');
                 const department = employee.getAttribute('data-department');
                 const status = employee.getAttribute('data-status');
 
-                const matchesSearch = name.includes(searchTerm);
+                const matchesSearch = name.includes(searchTerm) || code.includes(searchTerm);
                 const matchesDepartment = !departmentFilter || department === departmentFilter;
                 const matchesStatus = !statusFilter || status === statusFilter;
 
@@ -163,8 +275,86 @@
                 }
             });
 
+            // Update employee count
+            document.getElementById('employeeCount').textContent = visibleCount;
+            
             // Show/hide empty state
             document.getElementById('emptyState').style.display = visibleCount === 0 ? 'block' : 'none';
+            document.getElementById('employeeGrid').style.display = visibleCount === 0 ? 'none' : 'flex';
+        }
+
+        // Delete employee function
+        function deleteEmployee(employeeId, employeeCode) {
+            Swal.fire({
+                title: 'Deactivate Employee?',
+                text: `Are you sure you want to deactivate ${employeeCode}? This action can be reversed later.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, deactivate',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Make AJAX call to delete employee
+                    fetch(`/Employee/Delete/${employeeId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire('Deactivated!', data.message, 'success').then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire('Error!', data.message, 'error');
+                        }
+                    })
+                    .catch(error => {
+                        Swal.fire('Error!', 'An error occurred while deactivating the employee.', 'error');
+                    });
+                }
+            });
+        }
+
+        // Resend registration email function
+        function resendRegistration(employeeId) {
+            Swal.fire({
+                title: 'Resend Registration Email?',
+                text: 'This will send a new registration link to the employee\'s email address.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#6366f1',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, send email',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Make AJAX call to resend registration email
+                    fetch(`/Employee/ResendRegistrationEmail/${employeeId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire('Email Sent!', data.message, 'success');
+                        } else {
+                            Swal.fire('Error!', data.message, 'error');
+                        }
+                    })
+                    .catch(error => {
+                        Swal.fire('Error!', 'An error occurred while sending the email.', 'error');
+                    });
+                }
+            });
         }
     </script>
 }

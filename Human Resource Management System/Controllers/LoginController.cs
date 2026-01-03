@@ -28,45 +28,50 @@ namespace Human_Resource_Management_System.Controllers
         {
             try
             {
-                _logger.LogInformation($"?? Login attempt for email: {model?.Email ?? "null"}");
+                _logger.LogInformation($"?? Login attempt for email: {model.Email}");
                 
-                if (ModelState.IsValid)
+                if (!ModelState.IsValid)
                 {
-                    var user = await _userService.AuthenticateAsync(model.Email, model.Password);
-                    
-                    if (user != null)
+                    return View(model);
+                }
+
+                var user = await _userService.AuthenticateAsync(model.Email, model.Password);
+                
+                if (user != null)
+                {
+                    // Set session data
+                    HttpContext.Session.SetString("UserId", user.UserId.ToString());
+                    HttpContext.Session.SetString("UserEmail", user.Email);
+                    HttpContext.Session.SetString("UserName", $"{user.FirstName} {user.LastName}");
+                    HttpContext.Session.SetString("UserRole", user.Role);
+
+                    _logger.LogInformation($"? Login successful for: {user.Email}, Role: {user.Role}");
+
+                    // Redirect based on role
+                    if (user.Role == "Admin")
                     {
-                        // Store user info in session
-                        HttpContext.Session.SetString("UserId", user.UserId.ToString());
-                        HttpContext.Session.SetString("UserEmail", user.Email);
-                        HttpContext.Session.SetString("UserName", $"{user.FirstName} {user.LastName}");
-                        HttpContext.Session.SetString("UserRole", user.Role);
-                        
-                        _logger.LogInformation($"? Login successful for user: {user.Email}, Role: {user.Role}");
-                        _logger.LogInformation($"?? Redirecting to Dashboard");
-                        
-                        return RedirectToAction("Index", "Dashboard");
+                        return RedirectToAction("Index", "Home");
+                    }
+                    else if (user.Role == "Employee")
+                    {
+                        return RedirectToAction("Index", "EmployeeDashboard");
                     }
                     else
                     {
-                        _logger.LogWarning($"? Login failed for email: {model.Email}");
-                        ModelState.AddModelError("", "Invalid email or password. Please check your credentials and try again.");
+                        // Default redirect for other roles
+                        return RedirectToAction("Index", "Home");
                     }
                 }
                 else
                 {
-                    _logger.LogWarning("? Model validation failed");
-                    foreach (var error in ModelState.Values.SelectMany(v => v.Errors))
-                    {
-                        _logger.LogDebug($"   Validation error: {error.ErrorMessage}");
-                    }
+                    _logger.LogWarning($"? Login failed for email: {model.Email}");
+                    ModelState.AddModelError("", "Invalid email or password. Please check your credentials and try again.");
+                    return View(model);
                 }
-                
-                return View(model);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"?? Login error for email: {model?.Email ?? "unknown"}");
+                _logger.LogError(ex, $"?? Login error for email: {model.Email}");
                 ModelState.AddModelError("", "An error occurred during login. Please try again.");
                 return View(model);
             }
