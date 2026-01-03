@@ -1,0 +1,303 @@
+@model hrms.ViewModels.DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="page-header">
+    <div class="page-title">
+        <h2><i class="bi bi-speedometer2"></i> Dashboard</h2>
+    </div>
+    @if (Model.CurrentUserRole == "Admin")
+    {
+        <div class="header-actions">
+            <a asp-controller="Employee" asp-action="Create" class="btn btn-primary">
+                <i class="bi bi-person-plus"></i> Add Employee
+            </a>
+        </div>
+    }
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-xl-3 col-lg-6 col-md-6">
+        <div class="stats-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h5><i class="bi bi-people me-2"></i>Total Employees</h5>
+                        <h2>@Model.Employees.Count</h2>
+                        <small class="text-muted">All registered employees</small>
+                    </div>
+                    <div class="stats-icon">
+                        <i class="bi bi-people" style="font-size: 2rem; color: var(--accent-blue);"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-lg-6 col-md-6">
+        <div class="stats-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h5><i class="bi bi-check-circle me-2"></i>Present Today</h5>
+                        <h2 class="text-success">@Model.Employees.Count(e => e.Status == "Present")</h2>
+                        <small class="text-muted">Currently at work</small>
+                    </div>
+                    <div class="stats-icon">
+                        <i class="bi bi-check-circle" style="font-size: 2rem; color: var(--success-green);"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-lg-6 col-md-6">
+        <div class="stats-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h5><i class="bi bi-airplane me-2"></i>On Leave</h5>
+                        <h2 class="text-info">@Model.Employees.Count(e => e.Status == "OnLeave")</h2>
+                        <small class="text-muted">Approved leave</small>
+                    </div>
+                    <div class="stats-icon">
+                        <i class="bi bi-airplane" style="font-size: 2rem; color: var(--accent-blue);"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-lg-6 col-md-6">
+        <div class="stats-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h5><i class="bi bi-exclamation-circle me-2"></i>Absent</h5>
+                        <h2 class="text-warning">@Model.Employees.Count(e => e.Status == "Absent")</h2>
+                        <small class="text-muted">Not present today</small>
+                    </div>
+                    <div class="stats-icon">
+                        <i class="bi bi-exclamation-circle" style="font-size: 2rem; color: var(--warning-orange);"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-people me-2"></i>Employee Directory</h5>
+                    <div class="card-header-actions">
+                        <span class="badge bg-primary">@Model.Employees.Count employees</span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                @if (Model.Employees.Any())
+                {
+                    <div class="row g-4">
+                        @foreach (var employee in Model.Employees)
+                        {
+                            <div class="col-xl-3 col-lg-4 col-md-6">
+                                <a asp-controller="Employee" asp-action="Profile" asp-route-id="@employee.EmployeeId" 
+                                   class="text-decoration-none">
+                                    <div class="employee-card h-100">
+                                        <div class="position-relative">
+                                            @if (!string.IsNullOrEmpty(employee.ProfilePhotoPath))
+                                            {
+                                                <img src="@employee.ProfilePhotoPath" class="card-img-top" alt="@employee.FullName" 
+                                                     style="height: 200px; object-fit: cover;">
+                                            }
+                                            else
+                                            {
+                                                <div class="d-flex align-items-center justify-content-center bg-light" 
+                                                     style="height: 200px;">
+                                                    <i class="bi bi-person-circle text-muted" style="font-size: 4rem;"></i>
+                                                </div>
+                                            }
+                                            
+                                            <!-- Employee Status Indicator (The "Observer" View) -->
+                                            <div class="employee-status-indicator status-@(employee.Status.ToLower())" 
+                                                 title="@employee.StatusTooltip">
+                                                @if (employee.Status == "OnLeave")
+                                                {
+                                                    <!-- ?? Airplane Icon (On Leave) - Priority 1 -->
+                                                    <i class="bi bi-airplane"></i>
+                                                }
+                                                else if (employee.Status == "Present")
+                                                {
+                                                    <!-- ?? Green Dot (Present) - Priority 2 -->
+                                                    <i class="bi bi-circle-fill"></i>
+                                                }
+                                                else
+                                                {
+                                                    <!-- ?? Yellow Dot (Absent) - Priority 3/Default -->
+                                                    <i class="bi bi-circle-fill"></i>
+                                                }
+                                                <div class="status-tooltip">@employee.StatusTooltip</div>
+                                            </div>
+                                        </div>
+                                        <div class="card-body text-center">
+                                            <h6 class="card-title mb-1">@employee.FullName</h6>
+                                            <p class="text-muted small mb-1">@employee.Designation</p>
+                                            <p class="text-muted small mb-0">@employee.Department</p>
+                                            <div class="mt-3 pt-3 border-top">
+                                                <small class="text-muted">
+                                                    <i class="bi bi-calendar3 me-1"></i>
+                                                    Joined @employee.JoiningDate.ToString("MMM yyyy")
+                                                </small>
+                                            </div>
+                                            
+                                            <!-- Status Badge (Additional visual feedback) -->
+                                            <div class="mt-2">
+                                                @if (employee.Status == "OnLeave")
+                                                {
+                                                    <span class="badge bg-primary">
+                                                        <i class="bi bi-airplane me-1"></i>On Leave
+                                                    </span>
+                                                }
+                                                else if (employee.Status == "Present")
+                                                {
+                                                    <span class="badge bg-success">
+                                                        <i class="bi bi-check-circle me-1"></i>Present
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-warning">
+                                                        <i class="bi bi-exclamation-circle me-1"></i>Absent
+                                                    </span>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="empty-state text-center py-5">
+                        <div class="empty-state-icon mb-3">
+                            <i class="bi bi-inbox text-muted" style="font-size: 4rem;"></i>
+                        </div>
+                        <h5 class="text-muted">No Employees Found</h5>
+                        <p class="text-muted mb-4">Get started by adding your first employee to the system.</p>
+                        @if (Model.CurrentUserRole == "Admin")
+                        {
+                            <a asp-controller="Employee" asp-action="Create" class="btn btn-primary">
+                                <i class="bi bi-person-plus"></i> Add First Employee
+                            </a>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Initialize status indicators and set up real-time updates
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize systray status if user is not admin
+            @if (Model.CurrentUserRole != "Admin" && Model.CurrentUserCheckInStatus != null)
+            {
+                <text>
+                // Update header systray with current user's status
+                const userStatus = {
+                    hasCheckedIn: @Json.Serialize(Model.CurrentUserCheckInStatus.HasCheckedIn),
+                    checkInTime: @Json.Serialize(Model.CurrentUserCheckInStatus.CheckInTime?.ToString("yyyy-MM-ddTHH:mm:ss")),
+                    checkOutTime: @Json.Serialize(Model.CurrentUserCheckInStatus.CheckOutTime?.ToString("yyyy-MM-ddTHH:mm:ss")),
+                    canCheckOut: @Json.Serialize(Model.CurrentUserCheckInStatus.CanCheckOut)
+                };
+                
+                updateStatusSystray(userStatus);
+                </text>
+            }
+            
+            // Add enhanced animations for employee cards
+            const employeeCards = document.querySelectorAll('.employee-card');
+            employeeCards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(30px)';
+                setTimeout(() => {
+                    card.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, 100 + (index * 50));
+            });
+            
+            // Add pulse animation to status indicators
+            const statusIndicators = document.querySelectorAll('.employee-status-indicator');
+            statusIndicators.forEach(indicator => {
+                if (indicator.classList.contains('status-present')) {
+                    // Add subtle pulse for present status
+                    indicator.style.animation = 'pulse 2s infinite';
+                }
+            });
+        });
+        
+        // Add CSS for pulse animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @@keyframes pulse {
+                0% { transform: scale(1); }
+                50% { transform: scale(1.05); }
+                100% { transform: scale(1); }
+            }
+            
+            .employee-status-indicator.status-present i {
+                animation: pulse 2s infinite;
+            }
+            
+            .employee-status-indicator.status-onleave {
+                animation: float 3s ease-in-out infinite;
+            }
+            
+            @@keyframes float {
+                0%, 100% { transform: translateY(0px); }
+                50% { transform: translateY(-2px); }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // Set up tooltips for status indicators
+        const statusIndicators = document.querySelectorAll('.employee-status-indicator');
+        statusIndicators.forEach(indicator => {
+            indicator.addEventListener('mouseenter', function() {
+                const tooltip = this.querySelector('.status-tooltip');
+                if (tooltip) {
+                    tooltip.style.opacity = '1';
+                    tooltip.style.visibility = 'visible';
+                }
+            });
+            
+            indicator.addEventListener('mouseleave', function() {
+                const tooltip = this.querySelector('.status-tooltip');
+                if (tooltip) {
+                    tooltip.style.opacity = '0';
+                    tooltip.style.visibility = 'hidden';
+                }
+            });
+        });
+        
+        // Refresh dashboard data every 2 minutes to keep status updated
+        setInterval(function() {
+            // Only refresh if user is admin (to see employee status updates)
+            @if (Model.CurrentUserRole == "Admin")
+            {
+                <text>
+                location.reload();
+                </text>
+            }
+        }, 120000); // 2 minutes
+    </script>
+}

@@ -1,0 +1,290 @@
+@model List<hrms.Models.Employee>
+@{
+    ViewData["Title"] = "Employees";
+}
+
+<div class="page-header">
+    <div class="page-title">
+        <h2><i class="bi bi-people"></i> Employee Management</h2>
+        <p class="text-muted mb-0">Manage your organization's workforce</p>
+    </div>
+    <div class="header-actions">
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-person-plus"></i> Add Employee
+        </a>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-table me-2"></i>Employee Directory</h5>
+                    <div class="header-stats">
+                        <span class="badge bg-primary me-2">@Model.Count Total</span>
+                        <span class="badge bg-success me-2">@Model.Count(e => !string.IsNullOrEmpty(e.UserId)) Active</span>
+                        <span class="badge bg-warning">@Model.Count(e => string.IsNullOrEmpty(e.UserId)) Inactive</span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                @if (Model.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="ps-4">Employee</th>
+                                    <th>Contact Info</th>
+                                    <th>Department</th>
+                                    <th>Position</th>
+                                    <th>Joining Date</th>
+                                    <th>Salary</th>
+                                    <th>Status</th>
+                                    <th class="text-center" style="width: 200px;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var employee in Model)
+                                {
+                                    <tr>
+                                        <td class="ps-4">
+                                            <div class="d-flex align-items-center">
+                                                <div class="employee-avatar me-3">
+                                                    @if (!string.IsNullOrEmpty(employee.ProfilePhotoPath))
+                                                    {
+                                                        <img src="@employee.ProfilePhotoPath" alt="@employee.FirstName @employee.LastName" 
+                                                             class="rounded-circle" width="48" height="48" style="object-fit: cover;">
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="avatar-placeholder rounded-circle d-flex align-items-center justify-content-center bg-light"
+                                                             style="width: 48px; height: 48px;">
+                                                            <i class="bi bi-person text-muted"></i>
+                                                        </div>
+                                                    }
+                                                </div>
+                                                <div class="employee-info">
+                                                    <h6 class="mb-0">@employee.FirstName @employee.LastName</h6>
+                                                    <small class="text-muted">ID: @employee.LoginId</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="contact-info">
+                                                <div class="mb-1">
+                                                    <i class="bi bi-envelope me-1 text-muted"></i>
+                                                    <span>@employee.Email</span>
+                                                </div>
+                                                @if (!string.IsNullOrEmpty(employee.PhoneNumber))
+                                                {
+                                                    <div>
+                                                        <i class="bi bi-telephone me-1 text-muted"></i>
+                                                        <span>@employee.PhoneNumber</span>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="fw-medium">@employee.Department</span>
+                                        </td>
+                                        <td>
+                                            <span>@employee.Designation</span>
+                                        </td>
+                                        <td>
+                                            <span>@employee.JoiningDate.ToString("MMM dd, yyyy")</span>
+                                            <br>
+                                            <small class="text-muted">@((DateTime.Now - employee.JoiningDate).Days) days ago</small>
+                                        </td>
+                                        <td>
+                                            @if (employee.Salary != null)
+                                            {
+                                                <div class="salary-info">
+                                                    <span class="fw-medium text-success">?@employee.Salary.MonthlyWage.ToString("N0")</span>
+                                                    <br>
+                                                    <small class="text-muted">per month</small>
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">Not set</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (!string.IsNullOrEmpty(employee.UserId))
+                                            {
+                                                <span class="badge bg-success-soft text-success">
+                                                    <i class="bi bi-check-circle me-1"></i>Active
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-warning-soft text-warning">
+                                                    <i class="bi bi-exclamation-triangle me-1"></i>Inactive
+                                                </span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <div class="action-buttons d-flex gap-1 justify-content-center">
+                                                <a asp-action="Profile" asp-route-id="@employee.EmployeeId" 
+                                                   class="btn btn-sm btn-outline-primary" title="View Profile">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
+                                                <a asp-action="Edit" asp-route-id="@employee.EmployeeId" 
+                                                   class="btn btn-sm btn-outline-info" title="Edit">
+                                                    <i class="bi bi-pencil"></i>
+                                                </a>
+                                                <div class="dropdown">
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                                            data-bs-toggle="dropdown" title="More Actions">
+                                                        <i class="bi bi-three-dots"></i>
+                                                    </button>
+                                                    <ul class="dropdown-menu dropdown-menu-end">
+                                                        @if (!string.IsNullOrEmpty(employee.UserId))
+                                                        {
+                                                            <li>
+                                                                <h6 class="dropdown-header">
+                                                                    <i class="bi bi-shield-check me-1"></i>
+                                                                    Account Management
+                                                                </h6>
+                                                            </li>
+                                                            <li>
+                                                                <form asp-action="ResendCredentials" asp-route-id="@employee.EmployeeId" method="post" 
+                                                                      onsubmit="return confirm('Send login credentials to @employee.Email?');" class="m-0">
+                                                                    @Html.AntiForgeryToken()
+                                                                    <button type="submit" class="dropdown-item">
+                                                                        <i class="bi bi-envelope me-2"></i>Resend Credentials
+                                                                    </button>
+                                                                </form>
+                                                            </li>
+                                                            <li>
+                                                                <form asp-action="ResetPasswordAndResend" asp-route-id="@employee.EmployeeId" method="post" 
+                                                                      onsubmit="return confirm('Reset password for @employee.FirstName @employee.LastName? This will send new credentials to @employee.Email.');" class="m-0">
+                                                                    @Html.AntiForgeryToken()
+                                                                    <button type="submit" class="dropdown-item text-warning">
+                                                                        <i class="bi bi-arrow-clockwise me-2"></i>Reset Password
+                                                                    </button>
+                                                                </form>
+                                                            </li>
+                                                        }
+                                                        else
+                                                        {
+                                                            <li>
+                                                                <h6 class="dropdown-header text-warning">
+                                                                    <i class="bi bi-exclamation-triangle me-1"></i>
+                                                                    Account Required
+                                                                </h6>
+                                                            </li>
+                                                            <li><hr class="dropdown-divider"></li>
+                                                            <li>
+                                                                <form asp-action="RecreateUserAccount" asp-route-id="@employee.EmployeeId" method="post" 
+                                                                      onsubmit="return confirm('Create user account for @employee.FirstName @employee.LastName? Credentials will be sent to @employee.Email.');" class="m-0">
+                                                                    @Html.AntiForgeryToken()
+                                                                    <button type="submit" class="dropdown-item text-success">
+                                                                        <i class="bi bi-person-plus me-2"></i>Create Account
+                                                                    </button>
+                                                                </form>
+                                                            </li>
+                                                        }
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="empty-state text-center py-5">
+                        <div class="empty-state-icon mb-4">
+                            <i class="bi bi-people text-muted" style="font-size: 4rem;"></i>
+                        </div>
+                        <h5 class="text-muted">No Employees Found</h5>
+                        <p class="text-muted mb-4">Start building your team by adding the first employee.</p>
+                        <a asp-action="Create" class="btn btn-primary">
+                            <i class="bi bi-person-plus"></i> Add First Employee
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <style>
+        .bg-success-soft {
+            background-color: rgba(40, 167, 69, 0.1) !important;
+        }
+        
+        .bg-warning-soft {
+            background-color: rgba(255, 193, 7, 0.1) !important;
+        }
+        
+        .employee-avatar {
+            flex-shrink: 0;
+        }
+        
+        .avatar-placeholder {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef) !important;
+        }
+        
+        .contact-info {
+            font-size: 0.85rem;
+        }
+        
+        .salary-info {
+            text-align: right;
+        }
+        
+        .action-buttons .btn {
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .table tbody tr:hover {
+            background-color: rgba(52, 152, 219, 0.04);
+            transform: scale(1.005);
+            transition: all 0.2s ease;
+        }
+        
+        .empty-state {
+            padding: 4rem 2rem;
+        }
+        
+        .empty-state-icon {
+            opacity: 0.6;
+        }
+    </style>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add loading animation for table rows
+            const tableRows = document.querySelectorAll('tbody tr');
+            tableRows.forEach((row, index) => {
+                row.style.opacity = '0';
+                row.style.transform = 'translateY(10px)';
+                setTimeout(() => {
+                    row.style.transition = 'all 0.3s ease';
+                    row.style.opacity = '1';
+                    row.style.transform = 'translateY(0)';
+                }, index * 50);
+            });
+            
+            // Enhance dropdown interactions
+            document.querySelectorAll('.dropdown-toggle').forEach(toggle => {
+                toggle.addEventListener('click', function() {
+                    this.closest('.dropdown').classList.add('show');
+                });
+            });
+        });
+    </script>
+}

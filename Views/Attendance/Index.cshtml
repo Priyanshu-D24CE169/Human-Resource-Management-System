@@ -1,0 +1,204 @@
+@model hrms.ViewModels.AttendanceViewModel
+@{
+    ViewData["Title"] = "Attendance";
+}
+
+<div class="row mb-4">
+    <div class="col">
+        <h2><i class="bi bi-clock"></i> Attendance Management</h2>
+    </div>
+</div>
+
+@if (!Model.IsAdmin)
+{
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-4 text-center">
+                            <div class="display-4">
+                                <i class="bi bi-clock-history text-primary"></i>
+                            </div>
+                            <p class="text-muted mb-0">@DateTime.Now.ToString("dddd, dd MMM yyyy")</p>
+                            <h5 class="mt-2">@DateTime.Now.ToString("hh:mm tt")</h5>
+                        </div>
+                        <div class="col-md-8">
+                            @if (Model.TodayAttendance != null)
+                            {
+                                <div class="mb-3">
+                                    <h6>Today's Status: 
+                                        <span class="badge bg-@(Model.TodayAttendance.Status == "Present" ? "success" : "warning")">
+                                            @Model.TodayAttendance.Status
+                                        </span>
+                                    </h6>
+                                    @if (Model.TodayAttendance.CheckInTime != null)
+                                    {
+                                        <p class="mb-1">
+                                            <strong>Check In:</strong> 
+                                            <span class="text-success">@Model.TodayAttendance.CheckInTime.Value.ToString("hh:mm tt")</span>
+                                        </p>
+                                    }
+                                    @if (Model.TodayAttendance.CheckOutTime != null)
+                                    {
+                                        <p class="mb-1">
+                                            <strong>Check Out:</strong> 
+                                            <span class="text-danger">@Model.TodayAttendance.CheckOutTime.Value.ToString("hh:mm tt")</span>
+                                        </p>
+                                        <p class="mb-0">
+                                            <strong>Work Hours:</strong> @Model.TodayAttendance.WorkHours.ToString("F2") hrs
+                                            @if (Model.TodayAttendance.ExtraHours > 0)
+                                            {
+                                                <span class="badge bg-info">+@Model.TodayAttendance.ExtraHours.ToString("F2") extra hrs</span>
+                                            }
+                                        </p>
+                                    }
+                                </div>
+                            }
+
+                            <div class="d-grid gap-2">
+                                @if (Model.CanCheckIn)
+                                {
+                                    <form asp-action="CheckIn" method="post" class="d-inline">
+                                        <button type="submit" class="btn btn-success btn-lg w-100">
+                                            <i class="bi bi-box-arrow-in-right"></i> Check In
+                                        </button>
+                                    </form>
+                                }
+                                @if (Model.CanCheckOut)
+                                {
+                                    <form asp-action="CheckOut" method="post" class="d-inline">
+                                        <button type="submit" class="btn btn-danger btn-lg w-100">
+                                            <i class="bi bi-box-arrow-right"></i> Check Out
+                                        </button>
+                                    </form>
+                                }
+                                @if (!Model.CanCheckIn && !Model.CanCheckOut)
+                                {
+                                    <button class="btn btn-secondary btn-lg w-100" disabled>
+                                        <i class="bi bi-check-circle"></i> Attendance Marked
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow mb-3">
+                <div class="card-body text-center">
+                    <h6 class="text-muted">This Month</h6>
+                    <h2 class="text-success">@Model.Attendances.Count(a => a.Date.Month == DateTime.Now.Month && a.Status == "Present")</h2>
+                    <p class="mb-0">Days Present</p>
+                </div>
+            </div>
+            <div class="card shadow">
+                <div class="card-body text-center">
+                    <h6 class="text-muted">This Month</h6>
+                    <h2 class="text-warning">@Model.Attendances.Count(a => a.Date.Month == DateTime.Now.Month && a.Status == "Absent")</h2>
+                    <p class="mb-0">Days Absent</p>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<div class="card shadow">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="bi bi-calendar-check"></i> Attendance History</h5>
+        @if (Model.IsAdmin)
+        {
+            <a asp-action="Report" class="btn btn-primary btn-sm">
+                <i class="bi bi-file-earmark-bar-graph"></i> Full Report
+            </a>
+        }
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        @if (Model.IsAdmin)
+                        {
+                            <th>Employee</th>
+                        }
+                        <th>Date</th>
+                        <th>Check In</th>
+                        <th>Check Out</th>
+                        <th>Work Hours</th>
+                        <th>Extra Hours</th>
+                        <th>Status</th>
+                        <th>Remarks</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var attendance in Model.Attendances)
+                    {
+                        <tr>
+                            @if (Model.IsAdmin)
+                            {
+                                <td>@attendance.Employee.FirstName @attendance.Employee.LastName</td>
+                            }
+                            <td>@attendance.Date.ToString("dd MMM yyyy")</td>
+                            <td>
+                                @if (attendance.CheckInTime != null)
+                                {
+                                    <span class="text-success">@attendance.CheckInTime.Value.ToString("hh:mm tt")</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
+                            <td>
+                                @if (attendance.CheckOutTime != null)
+                                {
+                                    <span class="text-danger">@attendance.CheckOutTime.Value.ToString("hh:mm tt")</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
+                            <td>@attendance.WorkHours.ToString("F2")</td>
+                            <td>
+                                @if (attendance.ExtraHours > 0)
+                                {
+                                    <span class="badge bg-info">@attendance.ExtraHours.ToString("F2")</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
+                            <td>
+                                @if (attendance.Status == "Present")
+                                {
+                                    <span class="badge bg-success">Present</span>
+                                }
+                                else if (attendance.Status == "OnLeave")
+                                {
+                                    <span class="badge bg-info">On Leave</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning">Absent</span>
+                                }
+                            </td>
+                            <td>@attendance.Remarks</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        @if (!Model.Attendances.Any())
+        {
+            <div class="text-center py-5">
+                <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+                <p class="text-muted mt-3">No attendance records found</p>
+            </div>
+        }
+    </div>
+</div>

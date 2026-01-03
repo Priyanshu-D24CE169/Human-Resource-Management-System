@@ -1,0 +1,444 @@
+@model hrms.ViewModels.CreateLeaveRequestViewModel
+@{
+    ViewData["Title"] = "Apply for Leave";
+}
+
+<div class="page-header">
+    <div class="page-title">
+        <h2><i class="bi bi-calendar-plus"></i> Apply for Leave</h2>
+        <p class="text-muted mb-0">Submit a new leave request</p>
+    </div>
+    <div class="header-actions">
+        <a asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Leave Management
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    @if (Model.Employee != null)
+    {
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Your Leave Balance</h5>
+                </div>
+                <div class="card-body">
+                    <div class="leave-balance-summary">
+                        <div class="balance-item pto-balance mb-3">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="balance-info">
+                                    <div class="balance-icon">
+                                        <i class="bi bi-sun"></i>
+                                    </div>
+                                    <div class="balance-details">
+                                        <h6 class="mb-0">Paid Time Off</h6>
+                                        <small class="text-muted">Vacation days</small>
+                                    </div>
+                                </div>
+                                <div class="balance-count">
+                                    <h4 class="text-primary mb-0">@Model.Employee.AvailablePTO</h4>
+                                    <small class="text-muted">days left</small>
+                                </div>
+                            </div>
+                            <div class="progress mt-2" style="height: 6px;">
+                                <div class="progress-bar bg-primary" role="progressbar" 
+                                     style="width: @((double)Model.Employee.AvailablePTO / Model.Employee.PaidTimeOffBalance * 100)%" 
+                                     aria-valuenow="@Model.Employee.AvailablePTO" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="@Model.Employee.PaidTimeOffBalance">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="balance-item sick-balance mb-3">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="balance-info">
+                                    <div class="balance-icon">
+                                        <i class="bi bi-heart-pulse"></i>
+                                    </div>
+                                    <div class="balance-details">
+                                        <h6 class="mb-0">Sick Time Off</h6>
+                                        <small class="text-muted">Medical leave</small>
+                                    </div>
+                                </div>
+                                <div class="balance-count">
+                                    <h4 class="text-success mb-0">@Model.Employee.AvailableSickDays</h4>
+                                    <small class="text-muted">days left</small>
+                                </div>
+                            </div>
+                            <div class="progress mt-2" style="height: 6px;">
+                                <div class="progress-bar bg-success" role="progressbar" 
+                                     style="width: @((double)Model.Employee.AvailableSickDays / Model.Employee.SickTimeOffBalance * 100)%" 
+                                     aria-valuenow="@Model.Employee.AvailableSickDays" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="@Model.Employee.SickTimeOffBalance">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="balance-item unpaid-balance">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="balance-info">
+                                    <div class="balance-icon">
+                                        <i class="bi bi-clock"></i>
+                                    </div>
+                                    <div class="balance-details">
+                                        <h6 class="mb-0">Unpaid Leave</h6>
+                                        <small class="text-muted">No limit</small>
+                                    </div>
+                                </div>
+                                <div class="balance-count">
+                                    <h4 class="text-secondary mb-0">?</h4>
+                                    <small class="text-muted">unlimited</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-lightbulb me-2"></i>Guidelines</h5>
+                </div>
+                <div class="card-body">
+                    <div class="guidelines">
+                        <div class="guideline-item">
+                            <i class="bi bi-check-circle text-success me-2"></i>
+                            <span>Submit requests at least 2 days in advance</span>
+                        </div>
+                        <div class="guideline-item">
+                            <i class="bi bi-check-circle text-success me-2"></i>
+                            <span>Medical certificate required for sick leave >3 days</span>
+                        </div>
+                        <div class="guideline-item">
+                            <i class="bi bi-check-circle text-success me-2"></i>
+                            <span>You'll receive email notification on approval</span>
+                        </div>
+                        <div class="guideline-item">
+                            <i class="bi bi-check-circle text-success me-2"></i>
+                            <span>Unused PTO expires at year end</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    
+    <div class="@(Model.Employee != null ? "col-lg-8" : "col-12")">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-calendar-plus me-2"></i>Leave Request Form</h5>
+            </div>
+            <div class="card-body">
+                <form asp-action="Create" method="post" enctype="multipart/form-data" id="leaveForm">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="FromDate" class="form-label">From Date <span class="text-danger">*</span></label>
+                            <input asp-for="FromDate" class="form-control" type="date" min="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                            <span asp-validation-for="FromDate" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="ToDate" class="form-label">To Date <span class="text-danger">*</span></label>
+                            <input asp-for="ToDate" class="form-control" type="date" min="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                            <span asp-validation-for="ToDate" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="LeaveType" class="form-label">Leave Type <span class="text-danger">*</span></label>
+                        <select asp-for="LeaveType" class="form-select" id="leaveTypeSelect">
+                            <option value="">Select Leave Type</option>
+                            <option value="PaidLeave">Paid Leave / Vacation</option>
+                            <option value="SickLeave">Sick Leave / Medical</option>
+                            <option value="UnpaidLeave">Unpaid Leave</option>
+                        </select>
+                        <span asp-validation-for="LeaveType" class="text-danger"></span>
+                        <div class="form-text leave-type-help" id="leaveTypeHelp"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Reason" class="form-label">Reason for Leave <span class="text-danger">*</span></label>
+                        <textarea asp-for="Reason" class="form-control" rows="4" 
+                                  placeholder="Please provide a detailed reason for your leave request..."></textarea>
+                        <span asp-validation-for="Reason" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Attachment" class="form-label">Supporting Document</label>
+                        <input asp-for="Attachment" class="form-control" type="file" 
+                               accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" />
+                        <span asp-validation-for="Attachment" class="text-danger"></span>
+                        <div class="form-text">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Optional: Upload medical certificate or supporting documents (Max 5MB)
+                        </div>
+                    </div>
+
+                    <div id="leaveCalculation" class="alert alert-info d-none">
+                        <i class="bi bi-calculator me-2"></i>
+                        <strong>Leave Calculation:</strong>
+                        <div id="calculationDetails"></div>
+                    </div>
+
+                    <div id="balanceWarning" class="alert alert-warning d-none">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <strong>Insufficient Balance!</strong>
+                        <div id="warningDetails"></div>
+                    </div>
+
+                    <div class="mt-4 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary" id="submitBtn">
+                            <i class="bi bi-send me-2"></i> Submit Leave Request
+                        </button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle me-2"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    
+    <script>
+        // Leave balance data from server
+        const leaveBalances = {
+            paidLeave: @(Model.Employee?.AvailablePTO ?? 0),
+            sickLeave: @(Model.Employee?.AvailableSickDays ?? 0),
+            unpaidLeave: Infinity
+        };
+        
+        // Form elements
+        const fromDate = document.getElementById('FromDate');
+        const toDate = document.getElementById('ToDate');
+        const leaveTypeSelect = document.getElementById('leaveTypeSelect');
+        const leaveTypeHelp = document.getElementById('leaveTypeHelp');
+        const leaveCalculation = document.getElementById('leaveCalculation');
+        const calculationDetails = document.getElementById('calculationDetails');
+        const balanceWarning = document.getElementById('balanceWarning');
+        const warningDetails = document.getElementById('warningDetails');
+        const submitBtn = document.getElementById('submitBtn');
+        
+        // Update leave type help text
+        leaveTypeSelect.addEventListener('change', function() {
+            const selectedType = this.value;
+            let helpText = '';
+            
+            switch(selectedType) {
+                case 'PaidLeave':
+                    helpText = `<i class="bi bi-sun me-1"></i> You have <strong>${leaveBalances.paidLeave}</strong> paid leave days available.`;
+                    break;
+                case 'SickLeave':
+                    helpText = `<i class="bi bi-heart-pulse me-1"></i> You have <strong>${leaveBalances.sickLeave}</strong> sick leave days available.`;
+                    break;
+                case 'UnpaidLeave':
+                    helpText = `<i class="bi bi-clock me-1"></i> Unpaid leave has no limit but affects your salary.`;
+                    break;
+                default:
+                    helpText = '';
+            }
+            
+            leaveTypeHelp.innerHTML = helpText;
+            calculateLeave();
+        });
+        
+        // Calculate leave days and check balance
+        function calculateLeave() {
+            if (!fromDate.value || !toDate.value || !leaveTypeSelect.value) {
+                leaveCalculation.classList.add('d-none');
+                balanceWarning.classList.add('d-none');
+                submitBtn.disabled = false;
+                return;
+            }
+            
+            const from = new Date(fromDate.value);
+            const to = new Date(toDate.value);
+            
+            if (to < from) {
+                leaveCalculation.classList.add('d-none');
+                balanceWarning.classList.add('d-none');
+                return;
+            }
+            
+            const diffTime = Math.abs(to - from);
+            const totalDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+            const leaveType = leaveTypeSelect.value;
+            
+            // Show calculation
+            leaveCalculation.classList.remove('d-none');
+            calculationDetails.innerHTML = `
+                <div>Total days requested: <strong>${totalDays}</strong></div>
+                <div>Leave type: <strong>${getLeaveTypeName(leaveType)}</strong></div>
+                <div>Period: <strong>${from.toLocaleDateString()} - ${to.toLocaleDateString()}</strong></div>
+            `;
+            
+            // Check balance
+            const availableBalance = getAvailableBalance(leaveType);
+            if (availableBalance < totalDays && leaveType !== 'UnpaidLeave') {
+                balanceWarning.classList.remove('d-none');
+                warningDetails.innerHTML = `
+                    <div>Days requested: <strong>${totalDays}</strong></div>
+                    <div>Days available: <strong>${availableBalance}</strong></div>
+                    <div class="mt-2">Please reduce your request by <strong>${totalDays - availableBalance}</strong> day(s) or choose unpaid leave.</div>
+                `;
+                submitBtn.disabled = true;
+            } else {
+                balanceWarning.classList.add('d-none');
+                submitBtn.disabled = false;
+                
+                if (leaveType !== 'UnpaidLeave') {
+                    calculationDetails.innerHTML += `
+                        <div class="mt-2 text-success">
+                            <i class="bi bi-check-circle me-1"></i>
+                            Balance after approval: <strong>${availableBalance - totalDays}</strong> days remaining
+                        </div>
+                    `;
+                }
+            }
+        }
+        
+        function getLeaveTypeName(type) {
+            switch(type) {
+                case 'PaidLeave': return 'Paid Leave';
+                case 'SickLeave': return 'Sick Leave';
+                case 'UnpaidLeave': return 'Unpaid Leave';
+                default: return '';
+            }
+        }
+        
+        function getAvailableBalance(type) {
+            switch(type) {
+                case 'PaidLeave': return leaveBalances.paidLeave;
+                case 'SickLeave': return leaveBalances.sickLeave;
+                case 'UnpaidLeave': return Infinity;
+                default: return 0;
+            }
+        }
+        
+        // Event listeners
+        fromDate.addEventListener('change', calculateLeave);
+        toDate.addEventListener('change', calculateLeave);
+        
+        // Form submission enhancement
+        document.getElementById('leaveForm').addEventListener('submit', function(e) {
+            const totalDays = calculateTotalDays();
+            const leaveType = leaveTypeSelect.value;
+            
+            if (totalDays > 0 && leaveType && leaveType !== 'UnpaidLeave') {
+                const availableBalance = getAvailableBalance(leaveType);
+                if (totalDays > availableBalance) {
+                    e.preventDefault();
+                    alert('Insufficient leave balance. Please adjust your request.');
+                    return false;
+                }
+            }
+            
+            // Add loading state
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="bi bi-arrow-clockwise spin me-2"></i> Submitting...';
+        });
+        
+        function calculateTotalDays() {
+            if (!fromDate.value || !toDate.value) return 0;
+            const from = new Date(fromDate.value);
+            const to = new Date(toDate.value);
+            const diffTime = Math.abs(to - from);
+            return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+        }
+        
+        // Auto-set minimum to date when from date changes
+        fromDate.addEventListener('change', function() {
+            toDate.min = this.value;
+            if (toDate.value && toDate.value < this.value) {
+                toDate.value = this.value;
+            }
+            calculateLeave();
+        });
+    </script>
+    
+    <style>
+        .balance-item {
+            border: 1px solid var(--border-light);
+            border-radius: var(--border-radius);
+            padding: 16px;
+            transition: var(--transition);
+        }
+        
+        .balance-item:hover {
+            box-shadow: var(--shadow-light);
+        }
+        
+        .balance-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .balance-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: white;
+        }
+        
+        .pto-balance .balance-icon {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-teal));
+        }
+        
+        .sick-balance .balance-icon {
+            background: var(--success-green);
+        }
+        
+        .unpaid-balance .balance-icon {
+            background: var(--medium-gray);
+        }
+        
+        .balance-details h6 {
+            margin: 0;
+            font-weight: 600;
+            color: var(--primary-charcoal);
+        }
+        
+        .balance-count {
+            text-align: right;
+        }
+        
+        .balance-count h4 {
+            margin: 0;
+            font-weight: 700;
+        }
+        
+        .guideline-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            font-size: 0.9rem;
+        }
+        
+        .leave-type-help {
+            margin-top: 4px;
+            font-size: 0.875rem;
+            color: var(--accent-blue);
+        }
+        
+        .spin {
+            animation: spin 1s linear infinite;
+        }
+        
+        @@keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+}
